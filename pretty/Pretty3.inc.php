@@ -61,9 +61,6 @@ class Pretty {
 
     private function loadFilters($arr) {
         while(($name = array_pop($arr)) !== null) {
-            if ($name == '') {
-                continue;
-            }
             $filterName = self::$CONFIG->getNsPrefix() . '\\filter' . implode('\\', $arr) . '\\' . StringUtil::toPascalCase($name) . 'Filter';
             $filter = $this->classLoader->singleton($filterName);
             if ($filter) {
@@ -82,7 +79,11 @@ class Pretty {
             include 'view/WelcomeView.class.php';
             $view = new view\WelcomeView();
             $view->render(null);
+            return;
         }
+        include 'view/DebugView.class.php';
+        $view = new view\DebugView();
+        $view->render(null);
     }
 
 
@@ -140,7 +141,6 @@ class ClassLoader {
     			continue;
     		}
     		if(!preg_match('/(\\\\([a-z0-9_])+)+/i', $v)) {
-    			echo $v;
     			continue;	
     		}
     		$p = $this->singleton($v);
