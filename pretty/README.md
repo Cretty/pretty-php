@@ -1,4 +1,0 @@
-pretty-php
-==========
-
-Tiny pretty!
