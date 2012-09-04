@@ -29,7 +29,7 @@ class Pretty {
 
     private function buildChain() {
         $q = self::getArray($_SERVER, 'PATH_INFO');
-        if ($q === null || $q === '/') {
+        if ($q === null || $q === '/' || $q === '') {
             $q = '/index';
         } else  {
             $q = preg_replace('/(\\..*)$/', '', $q);
