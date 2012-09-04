@@ -6,7 +6,7 @@ class Pretty {
     
     public static $CONFIG;
 
-    private $filters;
+    private $filters = array();
     private $classLoader;
     private $viewResolver;
     private static $instance;
