@@ -9,6 +9,11 @@ class Pretty {
     private $filters;
     private $classLoader;
     private $viewResolver;
+    private static $instance;
+
+    public function __construct() {
+        self::$instance = $this;
+    }
 
     public function begin() {
         $this->preload();    
@@ -92,6 +97,12 @@ class Pretty {
     public static function getArray($array, $key, $default = null) {
         return isset($array[$key]) ? $array[$key] : $default;
     }
+
+    public static function includePrettyClass($className) {
+        if (!class_exists($className)) {
+            self::$instance->classLoader->loadFile($className) or die("$className not found in Pretty library");
+        }
+    }
 }
 
 class ClassLoader {
@@ -133,7 +144,9 @@ class ClassLoader {
         $file = $classPath . $path . (Pretty::$CONFIG->get('classExt') ?: '.class.php');
         if (file_exists($file)) {
             include_once $file;
+            return true;
         }
+        return false;
     }
 
     public function invokeProperties($obj) {
@@ -229,7 +242,7 @@ abstract class Action {
 
     protected abstract function run();
 
-    public function setView($viewname, $type = 'html') {
+    public function setView($viewname, $type = 'smarty') {
         $this->view = array($viewname, $type);
     }
 
