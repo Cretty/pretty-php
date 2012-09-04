@@ -1,2 +1,3 @@
 .DS*
 *.swp
+site-example/class/view/compiled/*.tpl.php

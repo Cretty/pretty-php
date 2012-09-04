@@ -16,7 +16,7 @@ class SmartyView implements p\View {
     public function render(p\Action $action) {
         $smartyDir = Pretty::$CONFIG->get('smarty.dir');
         if (!is_dir($smartyDir)) {
-            echo 'Can not found smarty lib, please set "smarty.dir" in SiteConfig';
+            die('Could not find smarty lib, please set "smarty.dir" in SiteConfig');
         }
         require_once $smartyDir . '/Smarty.class.php';
         $smarty = new \Smarty();
