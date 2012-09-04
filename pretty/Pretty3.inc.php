@@ -36,9 +36,9 @@ class Pretty {
         }
         $arr = explode('/', $q);
         if (count($arr) > self::$CONFIG->get('path.maxdeep')) {
-        	header('HTTP/1.1 405 request path too deep');
-        	echo ('request path too deep');
-        	die();
+            header('HTTP/1.1 405 request path too deep');
+            echo ('request path too deep');
+            die();
         }
         $action = null;
         while(($ends = array_pop($arr)) !== null) {
@@ -48,7 +48,7 @@ class Pretty {
             $className = $this->buildActionPath($arr, $ends);
             $action = $this->classLoader->singleton($className);
             if ($action !== null) {
-	            $this->classLoader->invokeProperties($action);
+                $this->classLoader->invokeProperties($action);
                 $this->loadFilters($arr);
                 break;
             }
@@ -71,7 +71,7 @@ class Pretty {
             $filterName = self::$CONFIG->getNsPrefix() . '\\filter' . implode('\\', $arr) . '\\' . StringUtil::toPascalCase($name) . 'Filter';
             $filter = $this->classLoader->singleton($filterName);
             if ($filter) {
-            	$this->classLoader->invokeProperties($filter);
+                $this->classLoader->invokeProperties($filter);
                 $this->filters[] = $filter;
             }
         }
@@ -135,7 +135,7 @@ class ClassLoader {
             $name);
         } elseif (StringUtil::startWith($name, $prettyNs)){
             $path = str_replace(array($prettyNs, '\\'),
-            	array('', '/'),
+                array('', '/'),
             $name);
             $classPath = Pretty::$CONFIG->getPrettyPath();
         } else {
@@ -150,35 +150,35 @@ class ClassLoader {
     }
 
     public function invokeProperties($obj) {
-    	$ppts = get_object_vars($obj);
-    	foreach($ppts as $k => $v) {
-    		if (!is_string($v)) {
-    			continue;
-    		}
-    		if(!preg_match('/(\\\\([a-z0-9_])+)+/i', $v)) {
-    			continue;	
-    		}
-    		$p = $this->singleton($v);
-    		if(!is_object($p)) {
-    			return;
-    		}
-    		$this->invokeProperties($p);
-    		$obj->$k = $p;
-    	}
+        $ppts = get_object_vars($obj);
+        foreach($ppts as $k => $v) {
+            if (!is_string($v)) {
+                continue;
+            }
+            if(!preg_match('/(\\\\([a-z0-9_])+)+/i', $v)) {
+                continue;    
+            }
+            $p = $this->singleton($v);
+            if(!is_object($p)) {
+                return;
+            }
+            $this->invokeProperties($p);
+            $obj->$k = $p;
+        }
     }
 
 }
 
 class ViewResolver {
 
-	public $classLoader;
+    public $classLoader;
 
     public function render(Action $action) {
         list($name, $clz) = $action->getView();
         $viewClass = Pretty::$CONFIG->get("views.$clz") ?: '\\net\\shawn_huang\\pretty\\view\\DebugView';
         $view = $this->classLoader->singleton($viewClass);
         if($view == null) {
-        	die('Cannot render action:' . get_class($action) . ', View:' . $viewClass . ' not found.');
+            die('Cannot render action:' . get_class($action) . ', View:' . $viewClass . ' not found.');
         }
         $view->render($action);
     }
@@ -222,22 +222,22 @@ class StringUtil {
 
 abstract class Action {
 
-	const STATUS_NORMAL = 0;
-	const STATUS_READONLY = 1;
-	const STATUS_END = -1;
-	const STATUS_SKIP = -2;
+    const STATUS_NORMAL = 0;
+    const STATUS_READONLY = 1;
+    const STATUS_END = -1;
+    const STATUS_SKIP = -2;
 
     private $view = null;
     private $data = array();
     private $actionStatus = 0;
 
     public final function startAction() {
-    	switch($this->actionStatus) {
-    		case self::STATUS_NORMAL:
-    		case self::STATUS_READONLY:
-    			$this->run();
-    			break;
-    	}
+        switch($this->actionStatus) {
+            case self::STATUS_NORMAL:
+            case self::STATUS_READONLY:
+                $this->run();
+                break;
+        }
     }
 
     protected abstract function run();
@@ -259,30 +259,30 @@ abstract class Action {
     }
 
     public function put($key, $value) {
-    	if ($this->isReadonly()) {
-    		return;
-    	}
-    	$this->data[$key] = $value;
+        if ($this->isReadonly()) {
+            return;
+        }
+        $this->data[$key] = $value;
     }
 
     public function setResult($result, $key = 'result') {
-    	$this->put($key, $result);
+        $this->put($key, $result);
     }
 
     public function isReadonly() {
-    	switch($this->actionStatus) {
-    		case self::STATUS_READONLY:
-    			return true;
-    	}
-    	return false;
+        switch($this->actionStatus) {
+            case self::STATUS_READONLY:
+                return true;
+        }
+        return false;
     }
 
     public function setStatus($status) {
-    	$this->actionStatus = $status;
+        $this->actionStatus = $status;
     }
 
     public function getStatus() {
-    	return $this->actionStatus;
+        return $this->actionStatus;
     }
 
 
@@ -298,40 +298,40 @@ interface Filter {
 
 class FilterChain {
 
-	const TYPE_BEFORE = 1;
-	const TYPE_AFTER = 0;
-	private $status = true;
-	private $filterArray;
-	private $type;
-	private $action;
+    const TYPE_BEFORE = 1;
+    const TYPE_AFTER = 0;
+    private $status = true;
+    private $filterArray;
+    private $type;
+    private $action;
 
-	public function __construct($array, $action, $type) {
-		$this->filterArray = $array;
-		$this->action = $action;
-		$this->type = $type;
-	}
+    public function __construct($array, $action, $type) {
+        $this->filterArray = $array;
+        $this->action = $action;
+        $this->type = $type;
+    }
 
-	public function next() {
-		return $this->status ? array_pop($this->filterArray) : null;
-	}	
+    public function next() {
+        return $this->status ? array_pop($this->filterArray) : null;
+    }    
 
-	public function teminate() {
-		$this->status = false;
-	}
+    public function teminate() {
+        $this->status = false;
+    }
 
-	public function doFilter() {
-		$filter = $this->next();
-		$fun = $this->type ? 'beforeAction' : 'afterAction';
-		if (!$filter) {
-			return;
-		}
-		switch ($this->action->getStatus()) {
-			case Action::STATUS_END:
-			return;
-		}
-		$filter->$fun($this->action, $this);
-		$this->doFilter();
-	}
+    public function doFilter() {
+        $filter = $this->next();
+        $fun = $this->type ? 'beforeAction' : 'afterAction';
+        if (!$filter) {
+            return;
+        }
+        switch ($this->action->getStatus()) {
+            case Action::STATUS_END:
+            return;
+        }
+        $filter->$fun($this->action, $this);
+        $this->doFilter();
+    }
 }
 
 interface View {

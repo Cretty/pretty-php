@@ -7,10 +7,10 @@ class SiteConfig {
     private $classPath;
     private $prettyPath;
     private $extra = array(
-    	'views.json' => '\\net\\shawn_huang\\pretty\\view\\JsonView',
+        'views.json' => '\\net\\shawn_huang\\pretty\\view\\JsonView',
         'views.smarty' => '\\net\\shawn_huang\\pretty\\view\\SmartyView',
-    	'path.maxdeep' => 10
-	);
+        'path.maxdeep' => 10
+    );
 
     public function __construct($classPath = null, $prettyPath = null) {
         $this->classPath = $classPath ?: realpath('./class');
