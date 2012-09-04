@@ -26,6 +26,8 @@ class Pretty {
         $q = self::getArray($_SERVER, 'PATH_INFO');
         if ($q === null || $q === '/') {
             $q = '/index';
+        } else  {
+            $q = preg_replace('/(\\..*)$/', '', $q);
         }
         $arr = explode('/', $q);
         if (count($arr) > self::$CONFIG->get('path.maxdeep')) {
