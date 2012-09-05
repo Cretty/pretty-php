@@ -4,8 +4,19 @@
         <meta chatset='utf-8' />
         <title>Thank you for trying pretty-php!</title>
         <style type="text/css">
+        * {
+            padding: 0;
+            margin:: 0;
+        }
+        section {
+            padding: 10px;
+        }
         section div {
-            margin: 10px 10px;
+            padding: 5px;
+            text-indent: 10px;
+        }
+        footer div {
+            text-align: center;
         }
         a {
             color: #3399FF;
@@ -17,7 +28,7 @@
         </style>
     </head>
     <body>
-        <h1>Hello pretty!</h1>
+        <header><h1>Hello pretty!</h1></header>
         <section>
             <div>This is a default page.</div>
             <div>Create IndexAction.class.php in your action folder.</div>
@@ -29,5 +40,15 @@
             <div>Then you can try <a href="<?=$prefix?>/hello_word"><b><?=$prefix?>/hello_world</b></a>,  <a href="<?=$prefix?>/hello_word"><b><?=$prefix?>/helloWorld</b></a>&nbsp;&nbsp;<a href="<?=$prefix?>/foo/bar"><b><?=$prefix?>/foo/bar</b></a> with pretty url.</div>
             <div>Now we add smarty support in pretty core. But you shold download smarty3 lib yourself and define it with $config->set('smarty.dir', 'somewhere'); in your configuration. If every thing is down, check <a href="index.php/smarty">here</a> to see whether is works.</div>
         </section>       
+        <section>
+            <caption><h1>Update History</h1></caption>
+            <section>
+                <caption><h3>Sep. 05 2012</h3></caption>
+                <div>Add jsonp support. To enable jsonp by $config->set('views.jsop.jsonp', 'callback'). The second parameter will be the callback key in $_GET.</div>
+            </section>
+        </section>
+        <footer>
+            <div>Powered by <a href="http://github.com/Cretty/pretty-php">pretty-php.</a></div>
+        </footer>
     </body>
 </html>
