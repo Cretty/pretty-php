@@ -7,6 +7,9 @@ class WelcomeView implements p\View {
 
     public function render(p\Action $action = null)    {
         @header('content-type:text/html;charset=utf-8');
-        echo file_get_contents(dirname(__FILE__) . '/html/welcome.html');
+        $host = $_SERVER['SERVER_NAME'];
+        $protocol = preg_match('/https/i', $_SERVER['SERVER_PROTOCOL']) ? 'https://' : 'http://';
+        $prefix = $protocol . $host;
+        include(dirname(__FILE__) . '/html/welcome.html');
     }
 }

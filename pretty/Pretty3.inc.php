@@ -7,6 +7,7 @@ class Pretty {
     public static $CONFIG;
 
     private $filters = array();
+    private $debug;
     private $classLoader;
     private $viewResolver;
     private static $instance;
@@ -50,8 +51,10 @@ class Pretty {
             if ($action !== null) {
                 $this->classLoader->invokeProperties($action);
                 $this->loadFilters($arr);
+                $this->debug['class'][$className] = true;
                 break;
             }
+            $this->debug['class'][$className] = false;
         }
         if (!$action) {
             $this->fallback($q);
@@ -73,7 +76,10 @@ class Pretty {
             if ($filter) {
                 $this->classLoader->invokeProperties($filter);
                 $this->filters[] = $filter;
+                $this->debug['class'][$filterName] = true;
+                continue;
             }
+            $this->debug['class'][$filterName] = false;
         }
     }
 
@@ -90,6 +96,8 @@ class Pretty {
         }
         include 'view/DebugView.class.php';
         $view = new view\DebugView();
+        $this->debug['files'] = $this->classLoader->getDebugData();
+        $view->data = $this->debug;
         $view->render(null);
     }
 
@@ -108,6 +116,7 @@ class Pretty {
 class ClassLoader {
 
     private $loaded = array();
+    private $debug;
 
     public function singleton($name) {
         if (isset($this->loaded[$name])) {
@@ -118,7 +127,6 @@ class ClassLoader {
         }
         $this->loadFile($name);
         if (!class_exists($name)) {
-            //不产生任何异常
             return null;
         }
         return ($this->loaded[$name] = new $name());
@@ -144,9 +152,9 @@ class ClassLoader {
         $file = $classPath . $path . (Pretty::$CONFIG->get('classExt') ?: '.class.php');
         if (file_exists($file)) {
             include_once $file;
-            return true;
+            return $this->debug[$file] = true;
         }
-        return false;
+        return $this->debug[$file] = false;
     }
 
     public function invokeProperties($obj) {
@@ -165,6 +173,10 @@ class ClassLoader {
             $this->invokeProperties($p);
             $obj->$k = $p;
         }
+    }
+
+    public function getDebugData() {
+        return $this->debug;
     }
 
 }
