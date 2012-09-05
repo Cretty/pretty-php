@@ -8,6 +8,7 @@ class SiteConfig {
     private $prettyPath;
     private $extra = array(
         'views.json' => '\\net\\shawn_huang\\pretty\\view\\JsonView',
+        'views.json.jsonp' => null,
         'views.smarty' => '\\net\\shawn_huang\\pretty\\view\\SmartyView',
         'path.maxdeep' => 10
     );
