@@ -18,6 +18,14 @@ class DebugView implements p\View {
             table tr td {
                 padding: 10px;
             }
+            td b {
+                color: red;
+            }
+            td i {
+                color: green;
+                font-style: normal;
+                font-weight: bold;
+            }
         </style>
     </head>    
     <body>
@@ -33,19 +41,25 @@ class DebugView implements p\View {
             </tr>
             <tr>
                 <td>file loading:</td>
-                <td><?php foreach($this->data['files'] as $k => $v) { ?>
-                    <p><?php echo $k?> : <?php echo ($v ? 'true': 'false');?></p> <?php } ?>
+                <td>
+                    <?php $this->output('files') ?>
                 </td>
             </tr>
             <tr>
                 <td>class searching:</td>
-                <td><?php foreach($this->data['class'] as $k => $v) { ?>
-                   <p><?php echo $k?> : <?php echo ($v ? 'true': 'false');?></p> <?php }?>
+                <td>
+                    <?php $this->output('class'); ?>
                 </td>
             </tr>
         </table>
     </body>
 </html><?php
+    }
+
+    private function output($type) {
+        foreach($this->data[$type] as $k => $v) {
+            echo '<p>' . $k . ' : ' . ($v ? '<i>OK</i>' : '<b>not found</b>') . '</p>';
+        }
     }
 
 }
