@@ -29,18 +29,18 @@ class DebugView implements p\View {
             </thead>
             <tr>
                 <td>request url:</td>
-                <td><?=$_SERVER['PATH_INFO']?></td>
+                <td><?php echo $_SERVER['PATH_INFO'];?></td>
             </tr>
             <tr>
                 <td>file loading:</td>
                 <td><?php foreach($this->data['files'] as $k => $v) { ?>
-                    <p><?=$k?> : <?=($v ? 'true': 'false')?></p> <?php } ?>
+                    <p><?php echo $k?> : <?php echo ($v ? 'true': 'false');?></p> <?php } ?>
                 </td>
             </tr>
             <tr>
                 <td>class searching:</td>
                 <td><?php foreach($this->data['class'] as $k => $v) { ?>
-                   <p><?=$k?> : <?=($v ? 'true': 'false')?></p> <?php }?>
+                   <p><?php echo $k?> : <?php echo ($v ? 'true': 'false');?></p> <?php }?>
                 </td>
             </tr>
         </table>
