@@ -262,11 +262,11 @@ abstract class Action {
         return $this->view;
     }
 
-    public function getGET($key, $default = null) {
+    public function get($key, $default = null) {
         return Pretty::getArray($_GET, $key, $default);
     } 
 
-    public function getPOST($key, $default = null) {
+    public function getPost($key, $default = null) {
         return Pretty::getArray($_POST, $key, $default);
     }
 
@@ -297,6 +297,12 @@ abstract class Action {
         return $this->actionStatus;
     }
 
+    public function setData($data) {
+        if ($this->isReadonly()) {
+            return;
+        }
+        $this->data = $data;
+    }
 
     public function getData() {
         return $this->data;
