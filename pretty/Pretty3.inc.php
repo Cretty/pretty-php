@@ -281,6 +281,10 @@ abstract class Action {
         $this->put($key, $result);
     }
 
+    public function setError($err) {
+        $this->put('error', $err);
+    }
+
     public function isReadonly() {
         switch($this->actionStatus) {
             case self::STATUS_READONLY:
