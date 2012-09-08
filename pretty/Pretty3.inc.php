@@ -98,6 +98,7 @@ class Pretty {
         $action = $this->classLoader->singleton('\\net\\shawn_huang\\pretty\\action\\NotFoundAction');
         $this->debug['files'] = $this->classLoader->getDebugData();
         $action->setData($this->debug);
+        $action->startAction();
         $this->viewResolver->render($action);
     }
 
