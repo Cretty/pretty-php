@@ -38,12 +38,12 @@ class DebugView implements p\View {
             </thead>
             <tr>
                 <td>request url:</td>
-                <td><?php echo $_SERVER['PATH_INFO'];?></td>
+                <td><?php echo $this->data['request.path']; ?></td>
             </tr>
             <tr>
                 <td>file loading:</td>
                 <td>
-                    <?php $this->output('files') ?>
+                    <?php $this->output('files'); ?>
                 </td>
             </tr>
             <tr>

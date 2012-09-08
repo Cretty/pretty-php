@@ -35,6 +35,7 @@ class Pretty {
         } else  {
             $q = preg_replace('/(\\..*)$/', '', $q);
         }
+        $this->debug['request.path'] = $q;
         $arr = explode('/', $q);
         if (count($arr) > self::$CONFIG->get('path.maxdeep')) {
             header('HTTP/1.1 405 request path too deep');
@@ -94,11 +95,6 @@ class Pretty {
             $view->render(null);
             return;
         }
-        // include 'view/DebugView.class.php';
-        // $view = new view\DebugView();
-        // $this->debug['files'] = $this->classLoader->getDebugData();
-        // $view->data = $this->debug;
-        // $view->render(null);
         $action = $this->classLoader->singleton('\\net\\shawn_huang\\pretty\\action\\NotFoundAction');
         $this->debug['files'] = $this->classLoader->getDebugData();
         $action->setData($this->debug);
