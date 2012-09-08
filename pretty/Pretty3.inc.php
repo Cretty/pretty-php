@@ -95,7 +95,7 @@ class Pretty {
             $view->render(null);
             return;
         }
-        $action = $this->classLoader->singleton('\\net\\shawn_huang\\pretty\\action\\NotFoundAction');
+        $action = $this->classLoader->singleton(Pretty::$CONFIG->get('action.notfound'));
         $this->debug['files'] = $this->classLoader->getDebugData();
         $action->setData($this->debug);
         $action->startAction();
@@ -309,8 +309,8 @@ abstract class Action {
         $this->data = $data;
     }
 
-    public function getData() {
-        return $this->data;
+    public function getData($key = null) {
+        return $key !== null ? Pretty::getArray($this->data, $key) : $this->data;
     }
 }
 
