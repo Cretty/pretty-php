@@ -29,7 +29,7 @@ class Pretty {
     }
 
     private function buildChain() {
-        $q = self::getArray($_SERVER, 'PATH_INFO');
+        $q = self::getArray($_SERVER, 'PATH_INFO') ?: self::getArray($_SERVER, 'ORIG_PATH_INFO');
         if ($q === null || $q === '/' || $q === '') {
             $q = '/index';
         } else  {
