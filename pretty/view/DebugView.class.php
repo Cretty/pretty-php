@@ -8,6 +8,7 @@ class DebugView implements p\View {
     public $data;
 
     public function render(p\Action $aciton = null) {
+        header('http/1.1 404 not found.');
         header('content-type:text/html;charset=utf8');
 ?><!DOCTYPE html>
 <html>

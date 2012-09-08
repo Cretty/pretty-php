@@ -15,7 +15,7 @@ class SiteConfig {
 
     public function __construct($classPath = null, $prettyPath = null) {
         $this->classPath = $classPath ?: realpath('./class');
-        $this->prettyPath = $prettyPath ?: realpath('../pretty');
+        $this->prettyPath = $prettyPath ?: dirname(__FILE__);
         $this->extra['cache.path'] = $classPath . '/cache';
         $this->nsPrefix = null;
     }
