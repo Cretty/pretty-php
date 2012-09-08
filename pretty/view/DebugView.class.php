@@ -5,11 +5,11 @@ use \net\shawn_huang\pretty as p;
 
 class DebugView implements p\View {
     
-    public $data;
-
-    public function render(p\Action $aciton = null) {
+    private $data;
+    public function render(p\Action $action) {
         header('http/1.1 404 not found.');
         header('content-type:text/html;charset=utf8');
+        $this->data = $action->getData();
 ?><!DOCTYPE html>
 <html>
     <head>

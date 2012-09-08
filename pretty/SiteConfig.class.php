@@ -10,6 +10,7 @@ class SiteConfig {
         'views.json' => '\\net\\shawn_huang\\pretty\\view\\JsonView',
         'views.json.jsonp' => null,
         'views.smarty' => '\\net\\shawn_huang\\pretty\\view\\SmartyView',
+        'action.notfound' => '\\net\\shawn_huang\\pretty\\action\\NotFound',
         'path.maxdeep' => 10
     );
 
