@@ -267,6 +267,10 @@ abstract class Action {
         return Pretty::getArray($_GET, $key, $default);
     } 
 
+    public function getRequest($key, $default = null) {
+        return Pretty::getArray($_REQUEST, $key, $default);
+    }
+
     public function getPost($key, $default = null) {
         return Pretty::getArray($_POST, $key, $default);
     }
