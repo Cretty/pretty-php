@@ -151,7 +151,7 @@ class ClassLoader {
             $path = str_replace('\\', '/', $name);
         }
         $file = $classPath . $path . (Pretty::$CONFIG->get('classExt') ?: '.class.php');
-        if (file_exists($file)) {
+        if (is_file($file)) {
             include_once $file;
             return $this->debug[$file] = true;
         }
