@@ -58,7 +58,7 @@ class Pretty {
                 break;
             }
             $this->debug['class'][$className] = false;
-            $this->subUrl[] = $ends;
+            array_unshift($subRequest, $ends);
         }
         if (!$action) {
             $this->fallback($q);
