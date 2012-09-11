@@ -172,7 +172,7 @@ class ClassLoader {
             }
             $p = $this->singleton($v);
             if(!is_object($p)) {
-                return;
+                continue;
             }
             $this->invokeProperties($p);
             $obj->$k = $p;
