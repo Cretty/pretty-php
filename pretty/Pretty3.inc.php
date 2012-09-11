@@ -43,6 +43,7 @@ class Pretty {
             die();
         }
         $action = null;
+        $subRequest = array();
         while(($ends = array_pop($arr)) !== null) {
             if ($ends == '') {
                 continue;
@@ -53,9 +54,11 @@ class Pretty {
                 $this->classLoader->invokeProperties($action);
                 $this->loadFilters($arr);
                 $this->debug['class'][$className] = true;
+                $action->subRequest = $subRequest;
                 break;
             }
             $this->debug['class'][$className] = false;
+            $this->subUrl[] = $ends;
         }
         if (!$action) {
             $this->fallback($q);
@@ -243,6 +246,7 @@ abstract class Action {
     private $view = null;
     private $data = array();
     private $actionStatus = 0;
+    public $subRequest;
 
     public final function startAction() {
         switch($this->actionStatus) {
