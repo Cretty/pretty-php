@@ -346,7 +346,7 @@ class FilterChain {
         return $this->status ? array_pop($this->filterArray) : null;
     }    
 
-    public function teminate() {
+    public function terminate() {
         $this->status = false;
     }
 
