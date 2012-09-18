@@ -54,6 +54,7 @@ class Pretty {
                 $this->debug['class'][$className] = false;
                 $className = $this->buildActionPath($arr, $ends, true);
                 $action = $this->classLoader->singleton($className);
+                if($action !== null) array_push($arr, $ends);
             }
             if ($action !== null) {
                 $this->classLoader->invokeProperties($action);
