@@ -51,6 +51,7 @@ class Pretty {
             $className = $this->buildActionPath($arr, $ends);
             $action = $this->classLoader->singleton($className);
             if ($action == null) {
+                $this->debug['class'][$className] = false;
                 $className = $this->buildActionPath($arr, $ends, true);
                 $action = $this->classLoader->singleton($className);
             }
@@ -92,7 +93,7 @@ class Pretty {
     }
 
     private function buildActionPath($arr, $ends, $index = false) {
-        return self::$CONFIG->getNsPrefix() . '\\action' . implode('\\', $arr) . '\\' . StringUtil::toPascalCase($ends) . $index ? '\\IndexAction' : 'Action';
+        return self::$CONFIG->getNsPrefix() . '\\action' . implode('\\', $arr) . '\\' . $index ? ($ends '\\IndexAction') : (StringUtil::toPascalCase($ends) . 'Action');
     }
 
     private function fallback($q) {
