@@ -11,6 +11,7 @@ class SiteConfig {
         'views.json.jsonp' => null,
         'views.smarty' => '\\net\\shawn_huang\\pretty\\view\\SmartyView',
         'action.notfound' => '\\net\\shawn_huang\\pretty\\action\\NotFoundAction',
+        'action.smartIndex' => 'Index',
         'path.maxdeep' => 10
     );
 
