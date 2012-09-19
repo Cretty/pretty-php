@@ -13,18 +13,7 @@ class DebugView implements p\View {
     public function render(p\Action $action) {
         header('http/1.1 404 not found.');
         header('content-type:text/html;charset=utf8');
-        $log = p\Pretty::getLog();
-        foreach($log as $k => $v) {
-            $arr = explode(':', $k);
-            switch (count($arr)) {
-                case 2:
-                    $this->data[$arr[0]][$arr[1]] = $v;
-                    break;
-                default:
-                    $this->data[$k] = $v;
-                    break;
-            }
-        }
+        $this->data = $action->getData();
 
 ?><!DOCTYPE html>
 <html>
