@@ -219,7 +219,7 @@ class ViewResolver {
             }
             $debug[$viewClz] = false;
         }
-        $viewClz = Pretty::$CONFIG->getNsPrefix() . "\\view\\" . StringUtil::toCamelCase($viewType);
+        $viewClz = Pretty::$CONFIG->getNsPrefix() . "\\view\\" . StringUtil::toPascalCase($viewType) . 'View';
         $ret = $this->classLoader->singleton($viewClz);
         if ($ret) {
             $debug[$viewClz] = true;
