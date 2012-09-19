@@ -5,11 +5,27 @@ use \net\shawn_huang\pretty as p;
 
 class DebugView implements p\View {
     
-    private $data;
+    private $data = array(
+        'request.path' => '',
+        'file' => array(),
+        'class' => array()
+    );
     public function render(p\Action $action) {
         header('http/1.1 404 not found.');
         header('content-type:text/html;charset=utf8');
-        $this->data = $action->getData();
+        $log = p\Pretty::getLog();
+        foreach($log as $k => $v) {
+            $arr = explode(':', $k);
+            switch (count($arr)) {
+                case 2:
+                    $this->data[$arr[0]][$arr[1]] = $v;
+                    break;
+                default:
+                    $this->data[$k] = $v;
+                    break;
+            }
+        }
+
 ?><!DOCTYPE html>
 <html>
     <head>
@@ -43,7 +59,7 @@ class DebugView implements p\View {
             <tr>
                 <td>file loading:</td>
                 <td>
-                    <?php $this->output('files'); ?>
+                    <?php $this->output('file'); ?>
                 </td>
             </tr>
             <tr>

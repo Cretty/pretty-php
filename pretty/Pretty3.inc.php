@@ -7,7 +7,7 @@ class Pretty {
     public static $CONFIG;
 
     private $filters = array();
-    private $debug = array('files' => array(), 'class' => array());
+    private static $log = array();
     private $classLoader;
     private $viewResolver;
     private static $instance;
@@ -35,7 +35,7 @@ class Pretty {
         } else  {
             $q = preg_replace('/(\\..*)$/', '', $q);
         }
-        $this->debug['request.path'] = $q;
+        self::log('request.path', $q);
         $arr = explode('/', $q);
         if (count($arr) > self::$CONFIG->get('path.maxdeep')) {
             header('HTTP/1.1 405 request path too deep');
@@ -51,7 +51,7 @@ class Pretty {
             $className = $this->buildActionPath($arr, $ends);
             $action = $this->classLoader->singleton($className);
             if ($action == null && self::$CONFIG->get('action.smartIndex')) {
-                $this->debug['class'][$className] = false;
+                self::log("class:$className", false);
                 $className = $this->buildActionPath($arr, $ends, true);
                 $action = $this->classLoader->singleton($className);
                 if($action !== null) array_push($arr, $ends);
@@ -59,11 +59,11 @@ class Pretty {
             if ($action !== null) {
                 $this->classLoader->invokeProperties($action);
                 $this->loadFilters($arr);
-                $this->debug['class'][$className] = true;
+                self::log("class:$className", true);
                 $action->subRequest = $subRequest;
                 break;
             }
-            $this->debug['class'][$className] = false;
+            self::log("class:$className", false);
             array_unshift($subRequest, $ends);
         }
         if (!$action) {
@@ -76,7 +76,7 @@ class Pretty {
         $afterFilter = new FilterChain($this->filters, $action, FilterChain::TYPE_AFTER);
         $afterFilter->doFilter();
         $action->getView() || $action->setView(null, 'json');
-        $this->viewResolver->render($action, $this->debug);
+        $this->viewResolver->render($action);
     }
 
     private function loadFilters($arr) {
@@ -86,10 +86,10 @@ class Pretty {
             if ($filter) {
                 $this->classLoader->invokeProperties($filter);
                 $this->filters[] = $filter;
-                $this->debug['class'][$filterName] = true;
+                pretty::log("class:$filterName", true);
                 continue;
             }
-            $this->debug['class'][$filterName] = false;
+            pretty::log("class:$filterName", false);
         }
     }
 
@@ -109,10 +109,8 @@ class Pretty {
             return;
         }
         $action = $this->classLoader->singleton(Pretty::$CONFIG->get('action.notfound'));
-        $this->debug['files'] = $this->classLoader->getDebugData();
-        $action->setData($this->debug);
         $action->startAction();
-        $this->viewResolver->render($action, $this->debug);
+        $this->viewResolver->render($action);
     }
 
 
@@ -125,12 +123,19 @@ class Pretty {
             self::$instance->classLoader->loadFile($className) or die("$className not found in Pretty library");
         }
     }
+
+    public static function log($key, $value, $level = 'debug') {
+        self::$log[$key] = $value;
+    }
+
+    public static function getLog() {
+        return self::$log;
+    }
 }
 
 class ClassLoader {
 
     private $loaded = array();
-    private $debug;
 
     public function singleton($name) {
         if (isset($this->loaded[$name])) {
@@ -166,9 +171,11 @@ class ClassLoader {
         $file = $classPath . $path . (Pretty::$CONFIG->get('classExt') ?: '.class.php');
         if (is_file($file)) {
             include_once $file;
-            return $this->debug[$file] = true;
+            Pretty::log("file:$file", true);
+            return true;
         }
-        return $this->debug[$file] = false;
+        Pretty::log("file:$file", false);
+        return false;
     }
 
     public function invokeProperties($obj) {
@@ -188,43 +195,36 @@ class ClassLoader {
             $obj->$k = $p;
         }
     }
-
-    public function getDebugData() {
-        return $this->debug;
-    }
-
 }
 
 class ViewResolver {
 
     public $classLoader;
 
-    public function render(Action $action, &$debug) {
+    public function render(Action $action) {
         list($name, $clz) = $action->getView();
-        $view = $this->loadView($clz, $debug);
+        $view = $this->loadView($clz);
         if($view == null) {
-            $debug['files'] = $this->classLoader->getDebugData();
-            $action->setData($debug);
             $view = $this->classLoader->singleton(Pretty::$CONFIG->get('views.debug'));
         }
         $view->render($action);
     }
 
-    private function loadView($viewType, &$debug) {
+    private function loadView($viewType) {
         if ($viewClz = Pretty::$CONFIG->get("views.$viewType")) {
             $ret = $this->classLoader->singleton($viewClz);
             if ($ret) {
-                $debug[$viewClz] = true;
+                Pretty::log("class:$viewClz", true);
                 return $ret;
             }
-            $debug[$viewClz] = false;
+            Pretty::log("class:$viewClz", false);
         }
         $viewClz = Pretty::$CONFIG->getNsPrefix() . "\\view\\" . StringUtil::toPascalCase($viewType) . 'View';
         $ret = $this->classLoader->singleton($viewClz);
         if ($ret) {
-            $debug[$viewClz] = true;
+            Pretty::log("class:$viewClz", true);
         }
-        $debug[$viewClz] = false;
+        Pretty::log("class:$viewClz", false);
         return $ret;
     }
 }
