@@ -76,7 +76,7 @@ class Pretty {
         $afterFilter = new FilterChain($this->filters, $action, FilterChain::TYPE_AFTER);
         $afterFilter->doFilter();
         $action->getView() || $action->setView(null, 'json');
-        $this->viewResolver->render($action);
+        $this->viewResolver->render($action, $this->debug);
     }
 
     private function loadFilters($arr) {
@@ -199,14 +199,22 @@ class ViewResolver {
 
     public $classLoader;
 
-    public function render(Action $action) {
+    public function render(Action $action, $debug) {
         list($name, $clz) = $action->getView();
-        $viewClass = Pretty::$CONFIG->get("views.$clz") ?: '\\net\\shawn_huang\\pretty\\view\\DebugView';
-        $view = $this->classLoader->singleton($viewClass);
+        $view = $this->loadView($clz);
         if($view == null) {
-            die('Cannot render action:' . get_class($action) . ', View:' . $viewClass . ' not found.');
+            $action->setData($debug);
+            $view = $this->classLoader->singleton(Pretty::$CONFIG->get('views.debug'));
         }
         $view->render($action);
+    }
+
+    private function loadView($viewType) {
+        if ($viewClz = Pretty::$CONFIG->get("views.$viewType")) {
+            return $this->classLoader->singleton($viewClz);
+        }
+        $viewType = Pretty::$CONFIG->getNsPrefix . "\\view\\" . StringUtil::toCamelCase($viewType);
+        return $this->classLoader->singleton($viewType);
     }
 }
 
