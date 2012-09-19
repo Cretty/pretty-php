@@ -7,7 +7,7 @@ class Pretty {
     public static $CONFIG;
 
     private $filters = array();
-    private $debug;
+    private $debug = array('files' => array(), 'class' => array());
     private $classLoader;
     private $viewResolver;
     private static $instance;
@@ -112,7 +112,7 @@ class Pretty {
         $this->debug['files'] = $this->classLoader->getDebugData();
         $action->setData($this->debug);
         $action->startAction();
-        $this->viewResolver->render($action);
+        $this->viewResolver->render($action, $this->debug);
     }
 
 
@@ -199,22 +199,33 @@ class ViewResolver {
 
     public $classLoader;
 
-    public function render(Action $action, $debug) {
+    public function render(Action $action, &$debug) {
         list($name, $clz) = $action->getView();
-        $view = $this->loadView($clz);
+        $view = $this->loadView($clz, $debug);
         if($view == null) {
+            $debug['files'] = $this->classLoader->getDebugData();
             $action->setData($debug);
             $view = $this->classLoader->singleton(Pretty::$CONFIG->get('views.debug'));
         }
         $view->render($action);
     }
 
-    private function loadView($viewType) {
+    private function loadView($viewType, &$debug) {
         if ($viewClz = Pretty::$CONFIG->get("views.$viewType")) {
-            return $this->classLoader->singleton($viewClz);
+            $ret = $this->classLoader->singleton($viewClz);
+            if ($ret) {
+                $debug[$viewClz] = true;
+                return $ret;
+            }
+            $debug[$viewClz] = false;
         }
-        $viewType = Pretty::$CONFIG->getNsPrefix . "\\view\\" . StringUtil::toCamelCase($viewType);
-        return $this->classLoader->singleton($viewType);
+        $viewClz = Pretty::$CONFIG->getNsPrefix() . "\\view\\" . StringUtil::toCamelCase($viewType);
+        $ret = $this->classLoader->singleton($viewClz);
+        if ($ret) {
+            $debug[$viewClz] = true;
+        }
+        $debug[$viewClz] = false;
+        return $ret;
     }
 }
 
