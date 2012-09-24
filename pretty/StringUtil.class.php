@@ -22,7 +22,7 @@ class StringUtil {
     }
 
     public static function toPascalCase($ori) {
-        return ucfirst(toCamelCase($ori));
+        return ucfirst(self::toCamelCase($ori));
     }
 
     public static function toCamelCase($ori) {
