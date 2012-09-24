@@ -312,6 +312,10 @@ abstract class Action {
         if ($this->isReadonly()) {
             return;
         }
+        if (is_array($key)) {
+            $this->data = array_merge($this->data, $key);
+            return;
+        }
         $this->data[$key] = $value;
     }
 
