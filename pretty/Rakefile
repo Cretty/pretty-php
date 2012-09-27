@@ -1,0 +1,27 @@
+# encoding=utf-8
+require 'rubygems'
+
+task :default => :merge
+
+desc 'Merge all *.class.php and *.interface.php into Pretty3.inc.php'
+task :merge do
+	files = FileList.new('*.class.php', '*.interface.php').to_ary.map do |file|
+		f = File.new file, 'r'
+		s = ''
+		start = false
+		f.each do |line|
+			if not start
+				start = true if line.match /^abstract|class|interface/ 
+			end
+			s += line if start
+		end
+		s
+	end
+	w = File.new 'Pretty3.inc.php', 'w'
+	w.puts "<?php\n\nnamespace net\\shawn_huang\\pretty;\n\n"
+	files.each do |file|
+		w.puts file
+		w.puts "\n"
+	end
+	w.close
+end
