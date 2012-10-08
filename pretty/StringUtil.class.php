@@ -12,10 +12,6 @@ class StringUtil {
         return (substr($str, -$length) === $needle);
     }
 
-    public static function endsWith2($str, $search) {
-        return preg_match("/$search\\$/", $str);
-    }
-
     public static function startWith($str, $needle) {
         $length = strlen($needle);
         return (substr($str, 0, $length) === $needle);
