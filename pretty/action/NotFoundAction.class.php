@@ -14,6 +14,11 @@ class NotFoundAction extends p\Action {
                 case 2:
                     $this->myData[$arr[0]][$arr[1]] = $v;
                     break;
+                case 3:
+                    if (PATH_SEPARATOR !== ':') {
+                        $this->myData[$arr[0]][$arr[1] . $arr[2]] = $v;
+                        break;
+                    }
                 default:
                     $this->myData[$k] = $v;
                     break;
