@@ -228,9 +228,15 @@ class NsRouter implements Router {
         // start
         $action = null;
         $subRequest = array();
+        $fallbackLimit = Pretty::$CONFIG->get('nsrouter.fallbackLimit') ?: 2;
+        $fallbackCount = 0;
         while(($ends = array_pop($arr)) !== null) {
             if ($ends == '') {
                 continue;
+            }
+            if (++$fallbackCount > $fallbackLimit) {
+                $this->fallbackReached();
+                break;
             }
             $className = $this->buildActionPath($arr, $ends);
             $action = $classLoader->singleton($className);
@@ -269,6 +275,10 @@ class NsRouter implements Router {
             }
             pretty::log("class:$filterName", false);
         }
+    }
+
+    private function fallbackReached() {
+        $this->filterCache = array();
     }
 
     private function buildActionPath($arr, $ends, $index = false) {
