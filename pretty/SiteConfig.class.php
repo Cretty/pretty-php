@@ -7,6 +7,7 @@ class SiteConfig {
     private $classPath;
     private $prettyPath;
     private $extra = array(
+        'pretty.router' => '\\net\\shawn_huang\\pretty\\NsRouter',
         'views.json' => '\\net\\shawn_huang\\pretty\\view\\JsonView',
         'views.smarty' => '\\net\\shawn_huang\\pretty\\view\\SmartyView',
         'views.debug' => '\\net\\shawn_huang\\pretty\\view\\DebugView',
