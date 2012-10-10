@@ -44,6 +44,7 @@ class NsRouter implements Router {
             Pretty::log("class:$className", false);
             array_unshift($subRequest, $ends);
         }
+        return $action;
     }
 
     public function findFilters(ClassLoader $classLoader, $pathInfo, $action = null) {

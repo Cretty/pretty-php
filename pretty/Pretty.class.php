@@ -6,10 +6,10 @@ class Pretty {
     
     public static $CONFIG;
 
-    private $filters = array();
     private static $log = array();
     private $classLoader;
     private $viewResolver;
+    private $router;
     private static $instance;
 
     public function __construct() {
@@ -25,55 +25,23 @@ class Pretty {
         $this->classLoader = new ClassLoader();
         $this->viewResolver = new ViewResolver();
         $this->viewResolver->classLoader = $this->classLoader;
+        $routerClz = self::$CONFIG->get('pretty.router');
+        $this->router = $this->classLoader->singleton($routerClz);
         self::$CONFIG->get('views.welcome') or self::$CONFIG->set('views.welcome', '\\net\\shawn_huang\\pretty\\view\\WelcomeView');
     }
 
     private function buildChain() {
         $q = self::getArray($_SERVER, 'PATH_INFO') ?: self::getArray($_SERVER, 'ORIG_PATH_INFO');
-        if ($q === null || $q === '/' || $q === '') {
-            $q = '/index';
-        } else  {
-            $q = preg_replace('/(\\..*)$/', '', $q);
-        }
-        self::log('request.path', $q);
-        $arr = explode('/', $q);
-        if (count($arr) > self::$CONFIG->get('path.maxdeep')) {
-            header('HTTP/1.1 405 request path too deep');
-            echo ('request path too deep');
-            die();
-        }
-        $action = null;
-        $subRequest = array();
-        while(($ends = array_pop($arr)) !== null) {
-            if ($ends == '') {
-                continue;
-            }
-            $className = $this->buildActionPath($arr, $ends);
-            $action = $this->classLoader->singleton($className);
-            if ($action == null && self::$CONFIG->get('action.smartIndex')) {
-                self::log("class:$className", false);
-                $className = $this->buildActionPath($arr, $ends, true);
-                $action = $this->classLoader->singleton($className);
-                if($action !== null) array_push($arr, $ends);
-            }
-            if ($action !== null) {
-                $this->classLoader->invokeProperties($action);
-                $this->loadFilters($arr);
-                self::log("class:$className", true);
-                $action->subRequest = $subRequest;
-                break;
-            }
-            self::log("class:$className", false);
-            array_unshift($subRequest, $ends);
-        }
+        $action = $this->router->findAction($this->classLoader, $q);
         if (!$action) {
             $this->fallback($q);
             return;
         }
-        $beforeFilter = new FilterChain($this->filters, $action, FilterChain::TYPE_BEFORE);
+        $filters = $this->router->findFilters($this->classLoader, $q, $action);
+        $beforeFilter = new FilterChain($filters, $action, FilterChain::TYPE_BEFORE);
         $beforeFilter->doFilter();
         $action->startAction();
-        $afterFilter = new FilterChain($this->filters, $action, FilterChain::TYPE_AFTER);
+        $afterFilter = new FilterChain($filters, $action, FilterChain::TYPE_AFTER);
         $afterFilter->doFilter();
         $action->getView() || $action->setView(null, 'json');
         $this->viewResolver->render($action);

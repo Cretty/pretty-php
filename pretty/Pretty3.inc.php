@@ -1,5 +1,21 @@
 <?php
+
 namespace net\shawn_huang\pretty;
+
+interface Filter {
+    public function beforeAction(Action $action, FilterChain $chain);
+    public function afterAction(Action $action, FilterChain $chain);
+}
+
+interface Router {
+    public function findAction(ClassLoader $classLoader, $pathInfo);
+    public function findFilters(ClassLoader $classLoader, $pathInfo, $action = null);
+}
+
+interface View {
+    public function render(Action $action);
+}
+
 abstract class Action {
 
     const STATUS_NORMAL = 0;
@@ -89,6 +105,7 @@ abstract class Action {
         return $key !== null ? Pretty::getArray($this->data, $key) : $this->data;
     }
 }
+
 class ClassLoader {
 
     private $loaded = array();
@@ -152,10 +169,7 @@ class ClassLoader {
         }
     }
 }
-interface Filter {
-    public function beforeAction(Action $action, FilterChain $chain);
-    public function afterAction(Action $action, FilterChain $chain);
-}
+
 class FilterChain {
 
     const TYPE_BEFORE = 1;
@@ -193,14 +207,87 @@ class FilterChain {
         $this->doFilter();
     }
 }
+
+class NsRouter implements Router {
+
+    private $filterCache;
+
+    public function findAction(ClassLoader $classLoader, $pathInfo) {
+        if ($pathInfo === null || $pathInfo === '/' || $pathInfo === '') {
+            $q = '/index';
+        } else  {
+            $q = preg_replace('/(\\..*)$/', '', $pathInfo);
+        }
+        Pretty::log('request.path', $q);
+        $arr = explode('/', $q);
+        if (count($arr) > Pretty::$CONFIG->get('path.maxdeep')) {
+            header('HTTP/1.1 405 request path too deep');
+            echo ('request path too deep');
+            die();
+        }
+        // start
+        $action = null;
+        $subRequest = array();
+        while(($ends = array_pop($arr)) !== null) {
+            if ($ends == '') {
+                continue;
+            }
+            $className = $this->buildActionPath($arr, $ends);
+            $action = $classLoader->singleton($className);
+            if ($action == null && Pretty::$CONFIG->get('action.smartIndex')) {
+                Pretty::log("class:$className", false);
+                $className = $this->buildActionPath($arr, $ends, true);
+                $action = $classLoader->singleton($className);
+                if($action !== null) array_push($arr, $ends);
+            }
+            if ($action !== null) {
+                $classLoader->invokeProperties($action);
+                $this->loadFilters($arr, $classLoader);
+                Pretty::log("class:$className", true);
+                $action->subRequest = $subRequest;
+                break;
+            }
+            Pretty::log("class:$className", false);
+            array_unshift($subRequest, $ends);
+        }
+        return $action;
+    }
+
+    public function findFilters(ClassLoader $classLoader, $pathInfo, $action = null) {
+        return $this->filterCache;
+    }
+
+    private function loadFilters($arr, $classLoader) {
+        while(($name = array_pop($arr)) !== null) {
+            $filterName = Pretty::$CONFIG->getNsPrefix() . '\\filter' . implode('\\', $arr) . '\\' . StringUtil::toPascalCase($name) . 'Filter';
+            $filter = $classLoader->singleton($filterName);
+            if ($filter) {
+                $classLoader->invokeProperties($filter);
+                $this->filterCache[] = $filter;
+                pretty::log("class:$filterName", true);
+                continue;
+            }
+            pretty::log("class:$filterName", false);
+        }
+    }
+
+    private function buildActionPath($arr, $ends, $index = false) {
+        $classPrefix = Pretty::$CONFIG->getNsPrefix() . '\\action' . implode('\\', $arr) . '\\'; 
+        if ($index) {
+            return "{$classPrefix}{$ends}\\IndexAction";
+        }
+        return $classPrefix . StringUtil::toPascalCase($ends) . 'Action';
+    }
+}
+
 class Pretty {
     
     public static $CONFIG;
 
-    private $filters = array();
     private static $log = array();
     private $classLoader;
     private $viewResolver;
+    private $router;
     private static $instance;
 
     public function __construct() {
@@ -216,55 +303,23 @@ class Pretty {
         $this->classLoader = new ClassLoader();
         $this->viewResolver = new ViewResolver();
         $this->viewResolver->classLoader = $this->classLoader;
+        $routerClz = self::$CONFIG->get('pretty.router');
+        $this->router = $this->classLoader->singleton($routerClz);
         self::$CONFIG->get('views.welcome') or self::$CONFIG->set('views.welcome', '\\net\\shawn_huang\\pretty\\view\\WelcomeView');
     }
 
     private function buildChain() {
         $q = self::getArray($_SERVER, 'PATH_INFO') ?: self::getArray($_SERVER, 'ORIG_PATH_INFO');
-        if ($q === null || $q === '/' || $q === '') {
-            $q = '/index';
-        } else  {
-            $q = preg_replace('/(\\..*)$/', '', $q);
-        }
-        self::log('request.path', $q);
-        $arr = explode('/', $q);
-        if (count($arr) > self::$CONFIG->get('path.maxdeep')) {
-            header('HTTP/1.1 405 request path too deep');
-            echo ('request path too deep');
-            die();
-        }
-        $action = null;
-        $subRequest = array();
-        while(($ends = array_pop($arr)) !== null) {
-            if ($ends == '') {
-                continue;
-            }
-            $className = $this->buildActionPath($arr, $ends);
-            $action = $this->classLoader->singleton($className);
-            if ($action == null && self::$CONFIG->get('action.smartIndex')) {
-                self::log("class:$className", false);
-                $className = $this->buildActionPath($arr, $ends, true);
-                $action = $this->classLoader->singleton($className);
-                if($action !== null) array_push($arr, $ends);
-            }
-            if ($action !== null) {
-                $this->classLoader->invokeProperties($action);
-                $this->loadFilters($arr);
-                self::log("class:$className", true);
-                $action->subRequest = $subRequest;
-                break;
-            }
-            self::log("class:$className", false);
-            array_unshift($subRequest, $ends);
-        }
+        $action = $this->router->findAction($this->classLoader, $q);
         if (!$action) {
             $this->fallback($q);
             return;
         }
-        $beforeFilter = new FilterChain($this->filters, $action, FilterChain::TYPE_BEFORE);
+        $filters = $this->router->findFilters($this->classLoader, $q, $action);
+        $beforeFilter = new FilterChain($filters, $action, FilterChain::TYPE_BEFORE);
         $beforeFilter->doFilter();
         $action->startAction();
-        $afterFilter = new FilterChain($this->filters, $action, FilterChain::TYPE_AFTER);
+        $afterFilter = new FilterChain($filters, $action, FilterChain::TYPE_AFTER);
         $afterFilter->doFilter();
         $action->getView() || $action->setView(null, 'json');
         $this->viewResolver->render($action);
@@ -323,58 +378,9 @@ class Pretty {
         return self::$log;
     }
 }
-class SiteConfig {
 
-    private $nsPrefix;
-    private $classPath;
-    private $prettyPath;
-    private $extra = array(
-        'views.json' => '\\net\\shawn_huang\\pretty\\view\\JsonView',
-        'views.smarty' => '\\net\\shawn_huang\\pretty\\view\\SmartyView',
-        'views.debug' => '\\net\\shawn_huang\\pretty\\view\\DebugView',
-        'views.json.jsonp' => null,
-        'action.notfound' => '\\net\\shawn_huang\\pretty\\action\\NotFoundAction',
-        'action.smartIndex' => 'Index',
-        'path.maxdeep' => 10
-    );
 
-    public function __construct($classPath = null, $prettyPath = null) {
-        $this->classPath = $classPath ?: realpath('./class');
-        $this->prettyPath = $prettyPath ?: dirname(__FILE__);
-        $this->extra['cache.path'] = $classPath . '/cache';
-        $this->nsPrefix = null;
-    }
 
-    public function initPretty($version = 3) {
-        require "{$this->prettyPath}/Pretty{$version}.inc.php";
-        Pretty::$CONFIG = $this;
-        $pretty = new Pretty();
-        $pretty->begin();
-    }
-
-    public function setNsPrefix($prefix) {
-        $this->nsPrefix = $prefix;
-    }
-    public function getNsPrefix() {
-        return $this->nsPrefix;
-    }
-
-    public function getPrettyPath() {
-        return $this->prettyPath;
-    }
-
-    public function getClassPath() {
-        return $this->classPath;
-    }
-
-    public function set($key, $value) {
-        $this->extra[$key] = $value;
-    }
-
-    public function get($key, $default = null) {
-        return isset($this->extra[$key]) ? $this->extra[$key] : $default;
-    }
-}
 class StringUtil {
 
     public static function endsWith($str, $needle) {
@@ -406,9 +412,7 @@ class StringUtil {
     }
 
 }
-interface View {
-    public function render(Action $action);
-}
+
 class ViewResolver {
 
     public $classLoader;
@@ -440,3 +444,4 @@ class ViewResolver {
         return $ret;
     }
 }
+

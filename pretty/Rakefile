@@ -5,7 +5,10 @@ task :default => :merge
 
 desc 'Merge all *.class.php and *.interface.php into Pretty3.inc.php'
 task :merge do
-	files = FileList.new('*.class.php', '*.interface.php').to_ary.map do |file|
+	files = FileList.new('*.interface.php', '*.class.php').to_ary.map do |file|
+		if File.basename(file) == 'SiteConfig.class.php'
+			next
+		end
 		f = File.new file, 'r'
 		s = ''
 		start = false
@@ -20,6 +23,9 @@ task :merge do
 	w = File.new 'Pretty3.inc.php', 'w'
 	w.puts "<?php\n\nnamespace net\\shawn_huang\\pretty;\n\n"
 	files.each do |file|
+		if file == nil
+			file = ''
+		end
 		w.puts file
 		w.puts "\n"
 	end
