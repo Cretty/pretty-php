@@ -8,8 +8,10 @@ interface Filter {
 }
 
 interface Router {
-    public function findAction(ClassLoader $classLoader, $pathInfo);
-    public function findFilters(ClassLoader $classLoader, $pathInfo, $action = null);
+
+    public function findAction($pathInfo);
+    
+    public function findFilters($pathInfo, $action = null);
 }
 
 interface View {
@@ -110,18 +112,28 @@ class ClassLoader {
 
     private $loaded = array();
 
-    public function singleton($name) {
+    public function __construct() {
+        $this->loaded['\\net\\shawn_huang\\pretty\\ClassLoader'] = $this;
+    }
+
+    public function singleton($name, $invokeProperties = false) {
         if (isset($this->loaded[$name])) {
             return $this->loaded[$name];
         }
         if (class_exists($name)) {
-            return ($this->loaded[$name] = new $name());
+            $obj = $this->loaded[$name] = new $name();
+            if($invokeProperties) $this->invokeProperties($obj);
+            return $obj;
         }
         $this->loadFile($name);
         if (!class_exists($name)) {
             return null;
         }
-        return ($this->loaded[$name] = new $name());
+        $obj = ($this->loaded[$name] = new $name());
+        if($invokeProperties && $obj) {
+            $this->invokeProperties($obj);
+        }
+        return $obj;
     }
 
     public function loadFile($name) {
@@ -174,6 +186,7 @@ class FilterChain {
 
     const TYPE_BEFORE = 1;
     const TYPE_AFTER = 0;
+
     private $status = true;
     private $filterArray;
     private $type;
@@ -210,11 +223,12 @@ class FilterChain {
 
 class NsRouter implements Router {
 
+    public $classLoader = '\\net\\shawn_huang\\pretty\\ClassLoader';
     private $filterCache;
 
-    public function findAction(ClassLoader $classLoader, $pathInfo) {
+    public function findAction($pathInfo) {
         if ($pathInfo === null || $pathInfo === '/' || $pathInfo === '') {
-            $q = '/index';
+            $q = Pretty::$CONFIG->get('site.index') ?: '/index';
         } else  {
             $q = preg_replace('/(\\..*)$/', '', $pathInfo);
         }
@@ -239,16 +253,16 @@ class NsRouter implements Router {
                 break;
             }
             $className = $this->buildActionPath($arr, $ends);
-            $action = $classLoader->singleton($className);
+            $action = $this->classLoader->singleton($className);
             if ($action == null && Pretty::$CONFIG->get('action.smartIndex')) {
                 Pretty::log("class:$className", false);
                 $className = $this->buildActionPath($arr, $ends, true);
-                $action = $classLoader->singleton($className);
+                $action = $this->classLoader->singleton($className);
                 if($action !== null) array_push($arr, $ends);
             }
             if ($action !== null) {
-                $classLoader->invokeProperties($action);
-                $this->loadFilters($arr, $classLoader);
+                $this->classLoader->invokeProperties($action);
+                $this->loadFilters($arr);
                 Pretty::log("class:$className", true);
                 $action->subRequest = $subRequest;
                 break;
@@ -259,16 +273,16 @@ class NsRouter implements Router {
         return $action;
     }
 
-    public function findFilters(ClassLoader $classLoader, $pathInfo, $action = null) {
+    public function findFilters($pathInfo, $action = null) {
         return $this->filterCache;
     }
 
-    private function loadFilters($arr, $classLoader) {
+    private function loadFilters($arr) {
         while(($name = array_pop($arr)) !== null) {
             $filterName = Pretty::$CONFIG->getNsPrefix() . '\\filter' . implode('\\', $arr) . '\\' . StringUtil::toPascalCase($name) . 'Filter';
-            $filter = $classLoader->singleton($filterName);
+            $filter = $this->classLoader->singleton($filterName);
             if ($filter) {
-                $classLoader->invokeProperties($filter);
+                $this->classLoader->invokeProperties($filter);
                 $this->filterCache[] = $filter;
                 pretty::log("class:$filterName", true);
                 continue;
@@ -314,33 +328,31 @@ class Pretty {
         $this->viewResolver = new ViewResolver();
         $this->viewResolver->classLoader = $this->classLoader;
         $routerClz = self::$CONFIG->get('pretty.router');
-        $this->router = $this->classLoader->singleton($routerClz);
+        $this->router = $this->classLoader->singleton($routerClz, true);
         self::$CONFIG->get('views.welcome') or self::$CONFIG->set('views.welcome', '\\net\\shawn_huang\\pretty\\view\\WelcomeView');
     }
 
     private function buildChain() {
         $q = self::getArray($_SERVER, 'PATH_INFO') ?: self::getArray($_SERVER, 'ORIG_PATH_INFO');
-        $action = $this->router->findAction($this->classLoader, $q);
+        $action = $this->router->findAction($q);
         if (!$action) {
             $this->fallback($q);
             return;
         }
-        $filters = $this->router->findFilters($this->classLoader, $q, $action);
+        $filters = $this->router->findFilters($q, $action);
         $beforeFilter = new FilterChain($filters, $action, FilterChain::TYPE_BEFORE);
         $beforeFilter->doFilter();
         $action->startAction();
         $afterFilter = new FilterChain($filters, $action, FilterChain::TYPE_AFTER);
         $afterFilter->doFilter();
-        $action->getView() || $action->setView(null, 'json');
         $this->viewResolver->render($action);
     }
 
     private function loadFilters($arr) {
         while(($name = array_pop($arr)) !== null) {
             $filterName = self::$CONFIG->getNsPrefix() . '\\filter' . implode('\\', $arr) . '\\' . StringUtil::toPascalCase($name) . 'Filter';
-            $filter = $this->classLoader->singleton($filterName);
+            $filter = $this->classLoader->singleton($filterName, true);
             if ($filter) {
-                $this->classLoader->invokeProperties($filter);
                 $this->filters[] = $filter;
                 pretty::log("class:$filterName", true);
                 continue;
@@ -358,13 +370,11 @@ class Pretty {
     }
 
     private function fallback($q) {
-        if ($q == '/index') {
-            include 'view/WelcomeView.class.php';
-            $view = new view\WelcomeView();
-            $view->render(null);
-            return;
+        if (empty($q)) {
+            $action = $this->classLoader->singleton('\\net\\shawn_huang\\pretty\\action\\WelcomeAction', true);
+        } else {
+            $action = $this->classLoader->singleton(Pretty::$CONFIG->get('action.notfound'), true);
         }
-        $action = $this->classLoader->singleton(Pretty::$CONFIG->get('action.notfound'));
         $action->startAction();
         $this->viewResolver->render($action);
     }
@@ -428,6 +438,9 @@ class ViewResolver {
     public $classLoader;
 
     public function render(Action $action) {
+        if ($action->getView() == null) {
+            $action->setView(null, 'json');
+        }
         list($name, $clz) = $action->getView();
         $view = $this->loadView($clz);
         if($view == null) {
@@ -446,6 +459,12 @@ class ViewResolver {
             Pretty::log("class:$viewClz", false);
         }
         $viewClz = Pretty::$CONFIG->getNsPrefix() . "\\view\\" . StringUtil::toPascalCase($viewType) . 'View';
+        $ret = $this->classLoader->singleton($viewClz);
+        if ($ret) {
+            Pretty::log("class:$viewClz", true);
+            return $ret;
+        }
+        $viewClz = "\\net\\shawn_huang\\pretty\\view\\" . $viewType;
         $ret = $this->classLoader->singleton($viewClz);
         if ($ret) {
             Pretty::log("class:$viewClz", true);
