@@ -6,7 +6,7 @@ class JsonView implements p\View {
 
     public function render(p\Action $action) {
         $jsonp = p\Pretty::$CONFIG->get('views.json.jsonp');
-        if ($jsonp && ($callback = $action->getGET($jsonp))) {
+        if ($jsonp && ($callback = $action->get($jsonp))) {
             $this->echoJsonp($action->getData(), $callback);
         } else {
             $this->echoJson($action->getData());
