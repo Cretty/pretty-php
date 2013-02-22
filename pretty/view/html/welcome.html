@@ -37,7 +37,7 @@
             <caption><h1>Sample site tips:</h1> <i>if you're running our site-example.</i> </caption>
             <div>You shold be able to access <a href="index.php/hello_world">Hello world(index.php/hello_world) </a> and <a href="index.php/foo/bar">foo bar (index.php/foo/bar)</a> .</div>
             <div>You can copy example.htaccess as your default rewirte rule if rewrite is supported.</div>
-            <div>Then you can try <a href="<?=$prefix?>/hello_word"><b><?=$prefix?>/hello_world</b></a>,  <a href="<?=$prefix?>/hello_word"><b><?=$prefix?>/helloWorld</b></a>&nbsp;&nbsp;<a href="<?=$prefix?>/foo/bar"><b><?=$prefix?>/foo/bar</b></a> with pretty url.</div>
+            <div>Then you can try <a href="<?php echo $prefix;?>/hello_world"><b><?php echo $prefix; ?>/hello_world</b></a>,  <a href="<?php echo $prefix;?>/hello_world"><b><?php echo $prefix; ?>/helloWorld</b></a>&nbsp;&nbsp;<a href="<?php echo $prefix; ?>/foo/bar"><b><?php echo $prefix; ?>/foo/bar</b></a> with pretty url.</div>
             <div>Now we add smarty support in pretty core. But you shold download smarty3 lib yourself and define it with $config->set('smarty.dir', 'somewhere'); in your configuration. If every thing is down, check <a href="index.php/smarty">here</a> to see whether is works.</div>
         </section>       
         <section>
