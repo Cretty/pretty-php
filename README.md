@@ -1,4 +1,8 @@
 pretty-php
 ==========
-<caption> Pretty 4 is comming! </caption>
+----
 
+###News: Pretty 4 Dev. preview 1 has been finished. 
+
+
+New features will be submit later.
