@@ -16,7 +16,7 @@ pretty-php
 # Notice: The sample codes below only work with Pretty 4.
 # Codes without Pretty
 $username = null;
-if isset($_POST['username']) {
+if (isset($_POST['username'])) {
     $username = $_POST['username'];
 }
 $output = json_encode(array('username' => $username));
