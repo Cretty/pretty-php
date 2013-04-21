@@ -2,7 +2,7 @@ pretty-php
 ==========
 ----
 
-###News: Pretty 4 Dev. preview 1 was finished. 
+###News: Pretty 4 Dev. preview 1 was finished, please checkout to dev branch. 
 
 #### What's Pretty?
   Pretty is a tiny framework written in PHP.
