@@ -15,7 +15,8 @@ class Framework {
             'Router' => '@%SmartRouter',
             'DefaultRouter' => '@%SmartRouter',
             'CacheAdapter' => '@%CacheAdapter',
-            'ViewResolver' => '@%ViewResolver'
+            'ViewResolver' => '@%ViewResolver',
+            'ExceptionHandler' => '@%ExceptionHandler'
         ),
         'class.aliasLimit' => 10,
         'view.mappings' => array(
@@ -83,8 +84,8 @@ class Framework {
             foreach($gds as $key => $value) {
                 $guardian = $this->classloader->load($value, true, true);
                 if (!$guardian) {
-                    throw new PrettyException("Fail to initialize guardian: $value",
-                        PrettyException::CODE_PRETTY_CLASS_INIT_FAILED);
+                    throw new Exception("Fail to initialize guardian: $value",
+                        Exception::CODE_PRETTY_CLASS_INIT_FAILED);
                 }
                 $guardians[$key] = $guardian;
             }
@@ -95,8 +96,8 @@ class Framework {
         }
         $router = $this->classloader->load('@*Router', true, true);
         if (!$router) {
-            throw new PrettyException('Framework started failed. Could not load the router.',
-                                    PrettyException::CODE_PRETTY_MISSING_CORE_CLASSES);
+            throw new Exception('Framework started failed. Could not load the router.',
+                                    Exception::CODE_PRETTY_MISSING_CORE_CLASSES);
         }
         $clzName = $router->findAction($webRequest);
         $filters = $router->findFilters($webRequest);
@@ -109,16 +110,16 @@ class Framework {
     public function display($resource) {
         $viewResolver = $this->classloader->load('@*ViewResolver', true, true);
         if (!$viewResolver) {
-            throw new PrettyException('Could not load ViewResolver, Action renderation failed.',
-                                    PrettyException::CODE_PRETTY_MISSING_CORE_CLASSES);
+            throw new Exception('Could not load ViewResolver, Action renderation failed.',
+                                    Exception::CODE_PRETTY_MISSING_CORE_CLASSES);
         }
         $viewResolver->display($resource);
     }
 
     private function runActionAndfilter($webRequest, $action, $filters) {
         if (!$action) {
-            throw PrettyException::createHttpStatus('Not Found',
-                PrettyException::CODE_HTTP_NOT_FOUND);
+            throw Exception::createHttpStatus('Not Found',
+                Exception::CODE_HTTP_NOT_FOUND);
         }
         $action->setWebRequest($webRequest);
         foreach ($filters as $key => $filter) {
@@ -144,12 +145,12 @@ class Framework {
 
     private function runForwardAction($action, $remains) {
         if ($remains-- <= 0) {
-            throw new PrettyException('Too many action forwards, check dead loop or increase [action.forwardLimits]', PrettyException::CODE_PRETTY_ACTION_ERROR);
+            throw new Exception('Too many action forwards, check dead loop or increase [action.forwardLimits]', Exception::CODE_PRETTY_ACTION_ERROR);
         }
         if ($fw = $action->getForward()) {
             $fwa = $this->classloader->load($fw, 1, 1);
             if (!$fwa) {
-                throw new PrettyException('Forward Action not found', PrettyException::CODE_PRETTY_CLASS_NOTFOUND);
+                throw new Exception('Forward Action not found', Exception::CODE_PRETTY_CLASS_NOTFOUND);
             }
             $fwa->copyFrom($action);
             $this->runActionAndfilter($fwa, array());
@@ -162,8 +163,8 @@ class Framework {
 
     private function guard($guardians, $webRequest, $remains) {
         if ($remains <= 0) {
-            throw new PrettyException('Too much guradian rewinds. Check dead loops in guardians\' rewriting rule or increase [guardians.maxRewrites]',
-                PrettyException::CODE_PRETTY_ACTION_ERROR);
+            throw new Exception('Too much guradian rewinds. Check dead loops in guardians\' rewriting rule or increase [guardians.maxRewrites]',
+                Exception::CODE_PRETTY_ACTION_ERROR);
         }
         $remains--;
         foreach ($guardians as $key => $guardian) {
@@ -189,15 +190,15 @@ class Framework {
             default:
                 $error = 'Unkown status code in WebRequest. Guardian:'
                     . get_class($guardian) . '. Status code:' . $webRequest->getStatus();
-                throw new PrettyException($error,
-                    PrettyException::CODE_PRETTY_ACTION_ERROR);
+                throw new Exception($error,
+                    Exception::CODE_PRETTY_ACTION_ERROR);
                 break;
         }
     }
 
     private function onException($exp) {
         if ($this->classloader) {
-            $handler = $this->classloader->load('@%ExceptionHandler');
+            $handler = $this->classloader->load('@*ExceptionHandler');
             if ($handler) {
                 $handler->setClassLoader($this->classloader);
                 $handler->handleException($exp);

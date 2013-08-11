@@ -152,7 +152,7 @@ class ClassLoader {
             return $clz['value'];
         }
         if (!class_exists($clz['name'], 0) && !$this->loadDefinition($clz)) {
-            if ($warning) throw new PrettyException("Class[{$clz['origin']}, {$clz['file']}] not found.", PrettyException::CODE_PRETTY_CLASS_NOTFOUND);
+            if ($warning) throw new Exception("Class[{$clz['origin']}, {$clz['file']}] not found.", Exception::CODE_PRETTY_CLASS_NOTFOUND);
             return null;
         }
         $name = $clz['name'];
@@ -194,7 +194,7 @@ class ClassLoader {
         }
         $detail = $clz;
         if (!$clz['isClass']) {
-            throw new PrettyException("Class definition of [{$clz['origin']} => {$clz['name']}] not found.", PrettyException::CODE_PRETTY_CLASS_NOTFOUND);
+            throw new Exception("Class definition of [{$clz['origin']} => {$clz['name']}] not found.", Exception::CODE_PRETTY_CLASS_NOTFOUND);
         }
         if (class_exists($clz['name'], false) && $clz['preloads'] == null) {
             return true;
@@ -313,8 +313,8 @@ class ClassLoader {
                 );
                 $aliasLimit = Config::get('class.aliasLimit');
                 if ($aliasDeep >= $aliasLimit) {
-                    throw new PrettyException("Alias too deep, Limit " . Config::get('class.aliasLimit'),
-                        PrettyException::CODE_PRETTY_CLASS_INI_FAILED);
+                    throw new Exception("Alias too deep, Limit " . Config::get('class.aliasLimit'),
+                        Exception::CODE_PRETTY_CLASS_INI_FAILED);
                 }
                 $target = substr($desc, 2);
                 if (!isset($alias[$target])) {
@@ -507,6 +507,43 @@ class Exception extends \Exception {
         return $this->classLoader;
     }
 }
+class ExceptionHandler {
+    private $classloader;
+    public function handleException($exp) {
+        if (is_a($exp, '\net\shawn_huang\pretty\Exception')) {
+            $this->handlePrettyExcepion($exp);
+        } else {
+            $this->handleOtherException($exp);
+        }
+    }
+    public function setClassLoader($loader) {
+        $this->classloader = $loader;
+    }
+    public function handlePrettyExcepion($exp) {
+        switch($exp->getCode()) {
+            case Exception::CODE_PRETTY_HTTP_STATUS:
+                $statusCode = $exp->getHttpCode();
+                @header("http/1.1 {$statusCode}");
+                $this->resolveView($exp);
+        }
+    }
+    public function handleOtherException($exp) {
+        echo $exp->__toString();
+    }
+    protected function resolveView($exp) {
+        $res = $exp->getWebResource();
+        if ($res && $res->getView()) {
+            try {
+                Framework::instance()->display($res);
+            } catch (Exception $e) {
+                echo $e->__toString();
+                echo $exp->__toString();
+            }
+        } else {
+            echo $exp->getMessage();
+        }
+    }
+}
 interface Filter {
     public function before(Action $action);
     public function after(Action $action);
@@ -517,7 +554,8 @@ class Framework {
             'Router' => '@%SmartRouter',
             'DefaultRouter' => '@%SmartRouter',
             'CacheAdapter' => '@%CacheAdapter',
-            'ViewResolver' => '@%ViewResolver'
+            'ViewResolver' => '@%ViewResolver',
+            'ExceptionHandler' => '@%ExceptionHandler'
         ),
         'class.aliasLimit' => 10,
         'view.mappings' => array(
@@ -567,8 +605,8 @@ class Framework {
             foreach($gds as $key => $value) {
                 $guardian = $this->classloader->load($value, true, true);
                 if (!$guardian) {
-                    throw new PrettyException("Fail to initialize guardian: $value",
-                        PrettyException::CODE_PRETTY_CLASS_INIT_FAILED);
+                    throw new Exception("Fail to initialize guardian: $value",
+                        Exception::CODE_PRETTY_CLASS_INIT_FAILED);
                 }
                 $guardians[$key] = $guardian;
             }
@@ -578,8 +616,8 @@ class Framework {
             }
         }
         if (!$router) {
-            throw new PrettyException('Framework started failed. Could not load the router.',
-                                    PrettyException::CODE_PRETTY_MISSING_CORE_CLASSES);
+            throw new Exception('Framework started failed. Could not load the router.',
+                                    Exception::CODE_PRETTY_MISSING_CORE_CLASSES);
         }
         $clzName = $router->findAction($webRequest);
         $filters = $router->findFilters($webRequest);
@@ -590,15 +628,15 @@ class Framework {
     }
     public function display($resource) {
         if (!$viewResolver) {
-            throw new PrettyException('Could not load ViewResolver, Action renderation failed.',
-                                    PrettyException::CODE_PRETTY_MISSING_CORE_CLASSES);
+            throw new Exception('Could not load ViewResolver, Action renderation failed.',
+                                    Exception::CODE_PRETTY_MISSING_CORE_CLASSES);
         }
         $viewResolver->display($resource);
     }
     private function runActionAndfilter($webRequest, $action, $filters) {
         if (!$action) {
-            throw PrettyException::createHttpStatus('Not Found',
-                PrettyException::CODE_HTTP_NOT_FOUND);
+            throw Exception::createHttpStatus('Not Found',
+                Exception::CODE_HTTP_NOT_FOUND);
         }
         $action->setWebRequest($webRequest);
         foreach ($filters as $key => $filter) {
@@ -622,12 +660,12 @@ class Framework {
     }
     private function runForwardAction($action, $remains) {
         if ($remains-- <= 0) {
-            throw new PrettyException('Too many action forwards, check dead loop or increase [action.forwardLimits]', PrettyException::CODE_PRETTY_ACTION_ERROR);
+            throw new Exception('Too many action forwards, check dead loop or increase [action.forwardLimits]', Exception::CODE_PRETTY_ACTION_ERROR);
         }
         if ($fw = $action->getForward()) {
             $fwa = $this->classloader->load($fw, 1, 1);
             if (!$fwa) {
-                throw new PrettyException('Forward Action not found', PrettyException::CODE_PRETTY_CLASS_NOTFOUND);
+                throw new Exception('Forward Action not found', Exception::CODE_PRETTY_CLASS_NOTFOUND);
             }
             $fwa->copyFrom($action);
             $this->runActionAndfilter($fwa, array());
@@ -639,8 +677,8 @@ class Framework {
     }
     private function guard($guardians, $webRequest, $remains) {
         if ($remains <= 0) {
-            throw new PrettyException('Too much guradian rewinds. Check dead loops in guardians\' rewriting rule or increase [guardians.maxRewrites]',
-                PrettyException::CODE_PRETTY_ACTION_ERROR);
+            throw new Exception('Too much guradian rewinds. Check dead loops in guardians\' rewriting rule or increase [guardians.maxRewrites]',
+                Exception::CODE_PRETTY_ACTION_ERROR);
         }
         $remains--;
         foreach ($guardians as $key => $guardian) {
@@ -665,14 +703,13 @@ class Framework {
             default:
                 $error = 'Unkown status code in WebRequest. Guardian:'
                     . get_class($guardian) . '. Status code:' . $webRequest->getStatus();
-                throw new PrettyException($error,
-                    PrettyException::CODE_PRETTY_ACTION_ERROR);
+                throw new Exception($error,
+                    Exception::CODE_PRETTY_ACTION_ERROR);
                 break;
         }
     }
     private function onException($exp) {
         if ($this->classloader) {
-            $handler = $this->classloader->load('@%ExceptionHandler');
             if ($handler) {
                 $handler->setClassLoader($this->classloader);
                 $handler->handleException($exp);

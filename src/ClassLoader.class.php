@@ -46,7 +46,7 @@ class ClassLoader {
             return $clz['value'];
         }
         if (!class_exists($clz['name'], 0) && !$this->loadDefinition($clz)) {
-            if ($warning) throw new PrettyException("Class[{$clz['origin']}, {$clz['file']}] not found.", PrettyException::CODE_PRETTY_CLASS_NOTFOUND);
+            if ($warning) throw new Exception("Class[{$clz['origin']}, {$clz['file']}] not found.", Exception::CODE_PRETTY_CLASS_NOTFOUND);
             return null;
         }
         $name = $clz['name'];
@@ -90,7 +90,7 @@ class ClassLoader {
         }
         $detail = $clz;
         if (!$clz['isClass']) {
-            throw new PrettyException("Class definition of [{$clz['origin']} => {$clz['name']}] not found.", PrettyException::CODE_PRETTY_CLASS_NOTFOUND);
+            throw new Exception("Class definition of [{$clz['origin']} => {$clz['name']}] not found.", Exception::CODE_PRETTY_CLASS_NOTFOUND);
         }
         if (class_exists($clz['name'], false) && $clz['preloads'] == null) {
             return true;
@@ -214,8 +214,8 @@ class ClassLoader {
             case '*':
                 $aliasLimit = Config::get('class.aliasLimit');
                 if ($aliasDeep >= $aliasLimit) {
-                    throw new PrettyException("Alias too deep, Limit " . Config::get('class.aliasLimit'),
-                        PrettyException::CODE_PRETTY_CLASS_INI_FAILED);
+                    throw new Exception("Alias too deep, Limit " . Config::get('class.aliasLimit'),
+                        Exception::CODE_PRETTY_CLASS_INI_FAILED);
                 }
                 $target = substr($desc, 2);
                 if (!isset($alias[$target])) {
