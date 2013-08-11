@@ -47,6 +47,7 @@ class ExceptionHandler {
      * @param Exception $exp the exception
      */
     public function handleOtherException($exp) {
+        header('http/1.1 500 Internal Error');
         echo $exp->__toString();
     }
 

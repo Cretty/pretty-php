@@ -9,6 +9,6 @@ class Err1 extends Action {
     protected function run() {
         $this->setView('json');
         $this->put('foo', 'bar');
-        throw Exception::createHttpStatus(500, 'error 1');
+        throw Exception::createHttpStatus('error 1', 500);
     }
 }

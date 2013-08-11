@@ -24,16 +24,6 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testAll() {
-
-        // Config::initDefault([]);
-        // Config::put('class.aliasLimit', 10);
-        // Config::put('class.alias', [
-        //     'Router' => '@%SmartRouter'
-        // ]);
-        // Config::put('class.path', dirname(__FILE__) . '/test_classes');
-        // Config::put('class.actionNamespace', '\action');
-        // Config::put('class.lib', $_SERVER['DOCUMENT_ROOT'] . '/lib');
-
         $cl = new p\ClassLoader;
         $obj = $cl->load('@*Router', true, true);
         
@@ -41,10 +31,8 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue(is_a($obj, '\net\shawn_huang\pretty\SmartRouter'));
         $this->assertTrue(is_a($obj->classLoader, '\net\shawn_huang\pretty\ClassLoader'));
 
-        // $this->assertTrue($cl->loadDefinition('@.action.Index'));
         $this->assertTrue($cl->loadDefinition('\action\Index'));
         $action  = $cl->load('\action\Index', 1, 1);
-        // $this->assertTrue(is_a($action, '\action\Index'));
     }
 
     public function testDomain() {
@@ -60,6 +48,79 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
         $cl = new p\ClassLoader();
         $view = $cl->load('@%view.JsonView');
         $this->assertTrue(is_a($view, '\net\shawn_huang\pretty\view\JsonView'));
+    }
+
+    public function testWarning() {
+        $cl = new p\ClassLoader();
+        //Class[@nothing, /Users/Shawn/Documents/Projects/php/pretty-4/test/test_classes/nothing] not found.
+        $message = 'Class[@nothing, ' . __DIR__ . '/test_classes/nothing] not found.';
+        try {
+            $cl->load('@nothing', true);
+            $this->assertFalse(1);
+        } catch (\Exception $exp) {
+            $this->assertEquals($message, $exp->getMessage());
+        }
+    }
+
+    public function testExplainClasses() {
+        # test domain
+        $cl = new p\ClassLoader();
+        $str = '@foo';
+        $arr = $cl->explainClasses($str);
+        $expect = [
+            'isClass' => true,
+            'isValue' => false,
+            'name' => '\foo',
+            'type' => p\CLASS_TYPE_DOMAIN,
+            'isNew' => false,
+            'file' => __DIR__ . '/test_classes/foo',
+            'preloads' => null,
+            'args' => null,
+            'value' => null,
+            'errors' => null,
+            'loadChildren' => true,
+            'origin' => '@foo'
+        ];
+        $this->assertEquals($expect, $arr);
+
+        # test pretty
+        $str = '@%foo';
+        $arr = $cl->explainClasses($str);
+        $expect = [
+            'isClass' => true,
+            'isValue' => false,
+            'name' => '\net\shawn_huang\pretty\foo',
+            'type' => p\CLASS_TYPE_PRETTY,
+            'isNew' => false,
+            'file' => dirname(__DIR__) . '/src/foo',
+            'preloads' => null,
+            'args' => null,
+            'value' => null,
+            'errors' => null,
+            'loadChildren' => true,
+            'origin' => '@%foo'
+        ];
+        $this->assertEquals($expect, $arr);
+
+        # test domain
+        $str = '\foo';
+        $arr = $cl->explainClasses($str);
+        $expect = [
+            'isClass' => true,
+            'isValue' => false,
+            'name' => '\foo',
+            'type' => p\CLASS_TYPE_DOMAIN,
+            'isNew' => false,
+            'file' => __DIR__ . '/test_classes/foo',
+            'preloads' => null,
+            'args' => null,
+            'value' => null,
+            'errors' => null,
+            'loadChildren' => true,
+            'origin' => '\foo'
+        ];
+        $this->assertEquals($expect, $arr);
+
     }
 
 }

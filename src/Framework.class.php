@@ -22,13 +22,7 @@ class Framework {
         'view.mappings' => array(
             'json' => '@%view.JsonView'
         ),
-        'view.defaultView' => 'json',
-        'error' => array(
-            'handler.file' => 'ExceptionHandler.class.php',
-            'handler.class' => '\net\shawn_huang\pretty\ExceptionHandler'
-        )
-
-
+        'view.defaultView' => 'json'
     );
 
     private static $_instance;
@@ -76,6 +70,10 @@ class Framework {
         }
     }
 
+    /**
+     * @access protected
+     * Processing framework
+     */
     protected function processPretty() {
         $this->classloader = new ClassLoader();
         $webRequest = new WebRequest();
@@ -107,6 +105,10 @@ class Framework {
         $this->display($action);
     }
 
+    /**
+     * Display a resource
+     * @param WebResource $resource resource
+     */
     public function display($resource) {
         $viewResolver = $this->classloader->load('@*ViewResolver', true, true);
         if (!$viewResolver) {
@@ -116,6 +118,13 @@ class Framework {
         $viewResolver->display($resource);
     }
 
+    /**
+     * Run action and filter
+     * @access private
+     * @param WebRequest $webRequest request
+     * @param Action $action action object
+     * @param array $filters an array carries filters
+     */
     private function runActionAndfilter($webRequest, $action, $filters) {
         if (!$action) {
             throw Exception::createHttpStatus('Not Found',

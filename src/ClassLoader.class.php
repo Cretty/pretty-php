@@ -37,7 +37,6 @@ class ClassLoader {
         }
         if (is_string($clz)) {
             $clz = $this->explainClasses($clz);
-            // var_dump($clz)
         }
         if (!$clz['isNew'] && isset($this->pool[$clz['name']])) {
             return $this->pool[$clz['name']];

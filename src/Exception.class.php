@@ -37,7 +37,7 @@ class Exception extends \Exception {
      * @param int $code http status code
      * @return Exception instance of Exception
      */
-    public static function createHttpStatus($httpCode = self::CODE_HTTP_INTERNAL_ERROR, $messageBody = 'Internal Error', $resource = null, $previous = null){
+    public static function createHttpStatus($messageBody = 'Internal Error', $httpCode = self::CODE_HTTP_INTERNAL_ERROR, $resource = null, $previous = null){
         $exp = new Exception($messageBody, self::CODE_PRETTY_HTTP_STATUS, $previous);
         $exp->setHttpCode($httpCode);
         $exp->setWebResource($resource);

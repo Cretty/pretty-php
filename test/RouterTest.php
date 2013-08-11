@@ -14,7 +14,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
     public function setUp() {
         parent::setUp();
         $this->baseConfig = [
-            'class.path' => dirname(__FILE__) . '/test_classes',
+            'class.path' => __DIR__ . '/test_classes',
             'class.actionNamespace' => '\\action',
             'class.namespace' => '\\'
         ];
@@ -24,7 +24,12 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
         $_SERVER['PATH_INFO'] = '/index';
         $this->expectOutputString(json_encode(['foo' => 'bar', 'holy' => 'crap']));
         p\Framework::instance($this->baseConfig)->start();
+    }
 
+    public function testNotFound() {
+        $_SERVER['PATH_INFO'] = 'notfound';
+        $this->expectOutputString('Not Found');
+        p\Framework::instance($this->baseConfig)->start();
     }
  
 }
