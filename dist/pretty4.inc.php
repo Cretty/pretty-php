@@ -143,7 +143,6 @@ class ClassLoader {
         }
         if (is_string($clz)) {
             $clz = $this->explainClasses($clz);
-            // var_dump($clz)
         }
         if (!$clz['isNew'] && isset($this->pool[$clz['name']])) {
             return $this->pool[$clz['name']];
@@ -270,10 +269,10 @@ class ClassLoader {
             ));
         }
         if ($desc{0} != '@' && $desc{0} != '&') {
-            return $this->classTemplate($desc, ['errors' => 'Not starts with @ or &']);
+            return $this->classTemplate($desc, array('errors' => 'Not starts with @ or &'));
         }
         if (!preg_match(CLASS_PATTERN, $desc)) {
-            return $this->classTemplate($desc, ['errors' => 'not match pattern:' . CLASS_PATTERN]);
+            return $this->classTemplate($desc, array('errors' => 'not match pattern:' . CLASS_PATTERN));
         }
         $prefix = $desc{0};
         $alias = Config::get('class.alias');
@@ -308,9 +307,10 @@ class ClassLoader {
                     $desc,
                     array(
                         'isValue' => true,
-                        'value' => Config::get(substr($desc, 1))
+                        'value' => Config::get(substr($desc, 2))
                     )
                 );
+            case '*':
                 $aliasLimit = Config::get('class.aliasLimit');
                 if ($aliasDeep >= $aliasLimit) {
                     throw new Exception("Alias too deep, Limit " . Config::get('class.aliasLimit'),
@@ -383,7 +383,7 @@ class ClassLoader {
         }
         return $clz;
     }
-    private function classTemplate($origin, $preset = null) {
+    public function classTemplate($origin, $preset = null) {
         $ret = array(
             'isClass' => false,
             'isValue' => false,
@@ -482,7 +482,7 @@ class Exception extends \Exception {
     private $httpCode = self::CODE_HTTP_OK;
     private $webResource = null;
     private $classLoader = null;
-    public static function createHttpStatus($httpCode = self::CODE_HTTP_INTERNAL_ERROR, $messageBody = 'Internal Error', $resource = null, $previous = null){
+    public static function createHttpStatus($messageBody = 'Internal Error', $httpCode = self::CODE_HTTP_INTERNAL_ERROR, $resource = null, $previous = null){
         $exp = new Exception($messageBody, self::CODE_PRETTY_HTTP_STATUS, $previous);
         $exp->setHttpCode($httpCode);
         $exp->setWebResource($resource);
@@ -528,6 +528,7 @@ class ExceptionHandler {
         }
     }
     public function handleOtherException($exp) {
+        header('http/1.1 500 Internal Error');
         echo $exp->__toString();
     }
     protected function resolveView($exp) {
@@ -561,11 +562,7 @@ class Framework {
         'view.mappings' => array(
             'json' => '@%view.JsonView'
         ),
-        'view.defaultView' => 'json',
-        'error' => array(
-            'handler.file' => 'ExceptionHandler.class.php',
-            'handler.class' => '\net\shawn_huang\pretty\ExceptionHandler'
-        )
+        'view.defaultView' => 'json'
     );
     private static $_instance;
     private $classloader;
@@ -615,6 +612,7 @@ class Framework {
                 return;
             }
         }
+        $router = $this->classloader->load('@*Router', true, true);
         if (!$router) {
             throw new Exception('Framework started failed. Could not load the router.',
                                     Exception::CODE_PRETTY_MISSING_CORE_CLASSES);
@@ -627,6 +625,7 @@ class Framework {
         $this->display($action);
     }
     public function display($resource) {
+        $viewResolver = $this->classloader->load('@*ViewResolver', true, true);
         if (!$viewResolver) {
             throw new Exception('Could not load ViewResolver, Action renderation failed.',
                                     Exception::CODE_PRETTY_MISSING_CORE_CLASSES);
@@ -635,8 +634,7 @@ class Framework {
     }
     private function runActionAndfilter($webRequest, $action, $filters) {
         if (!$action) {
-            throw Exception::createHttpStatus('Not Found',
-                Exception::CODE_HTTP_NOT_FOUND);
+            throw Exception::createHttpStatus('Not Found', 404);
         }
         $action->setWebRequest($webRequest);
         foreach ($filters as $key => $filter) {
@@ -710,15 +708,15 @@ class Framework {
     }
     private function onException($exp) {
         if ($this->classloader) {
+            $handler = $this->classloader->load('@*ExceptionHandler');
             if ($handler) {
                 $handler->setClassLoader($this->classloader);
                 $handler->handleException($exp);
                 return;
             }
-        } else {
-            trigger_error($exp->__toString(), E_USER_ERROR);
-            exit();
         }
+        trigger_error($exp->__toString(), E_USER_ERROR);
+        exit();
     }
 }
 interface Guardian {
@@ -893,10 +891,11 @@ class WebRequest {
         $uri = Arrays::valueFrom($_SERVER, 'PATH_INFO') ?:
             Arrays::valueFrom($_SERVER, 'ORIG_PATH_INFO');
         if ($uri === null) {
+            if(preg_match('/\.php(\/?.*)/', $_SERVER['REQUEST_URI'], $matchers)) {
                 $uri = $matchers[1] ?: '/';
             } else {
                 $uri = $_SERVER['REQUEST_URI'];
-                die('Cannot build request, none of these environments[PATH_INFO, ORIG_PATH_INFO, REQUEST_URI] exists.');
+                throw Exception::createHttpStatus('Cannot build request, none of these environments[PATH_INFO, ORIG_PATH_INFO, REQUEST_URI] exists.', 404);
             }
         }
         $this->originUri = $uri;
