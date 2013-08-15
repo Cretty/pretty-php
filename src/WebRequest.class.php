@@ -62,7 +62,7 @@ class WebRequest {
                 $uri = $matchers[1] ?: '/';
             } else {
                 $uri = $_SERVER['REQUEST_URI'];
-                die('Cannot build request, none of these environments[PATH_INFO, ORIG_PATH_INFO, REQUEST_URI] exists.');
+                throw Exception::createHttpStatus(404, 'Cannot build request, none of these environments[PATH_INFO, ORIG_PATH_INFO, REQUEST_URI] exists.');
             }
 
         }

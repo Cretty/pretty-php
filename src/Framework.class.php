@@ -127,8 +127,7 @@ class Framework {
      */
     private function runActionAndfilter($webRequest, $action, $filters) {
         if (!$action) {
-            throw Exception::createHttpStatus('Not Found',
-                Exception::CODE_HTTP_NOT_FOUND);
+            throw Exception::createHttpStatus(404, 'Not Found');
         }
         $action->setWebRequest($webRequest);
         foreach ($filters as $key => $filter) {
@@ -212,6 +211,8 @@ class Framework {
                 $handler->setClassLoader($this->classloader);
                 $handler->handleException($exp);
                 return;
+            } else {
+                trigger_error($exp->__toString(), E_USER_ERROR);
             }
         } else {
             trigger_error($exp->__toString(), E_USER_ERROR);

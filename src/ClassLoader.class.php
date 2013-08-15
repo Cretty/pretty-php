@@ -207,7 +207,7 @@ class ClassLoader {
                     $desc,
                     array(
                         'isValue' => true,
-                        'value' => Config::get(substr($desc, 1))
+                        'value' => Config::get(substr($desc, 2))
                     )
                 );
             case '*':
