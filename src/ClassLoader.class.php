@@ -169,10 +169,10 @@ class ClassLoader {
             ));
         }
         if ($desc{0} != '@' && $desc{0} != '&') {
-            return $this->classTemplate($desc, ['errors' => 'Not starts with @ or &']);
+            return $this->classTemplate($desc, array('errors' => 'Not starts with @ or &'));
         }
         if (!preg_match(CLASS_PATTERN, $desc)) {
-            return $this->classTemplate($desc, ['errors' => 'not match pattern:' . CLASS_PATTERN]);
+            return $this->classTemplate($desc, array('errors' => 'not match pattern:' . CLASS_PATTERN));
         }
         $prefix = $desc{0};
         $alias = Config::get('class.alias');
