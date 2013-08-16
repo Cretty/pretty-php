@@ -525,6 +525,9 @@ class ExceptionHandler {
                 $statusCode = $exp->getHttpCode();
                 @header("http/1.1 {$statusCode}");
                 $this->resolveView($exp);
+            default:
+                echo $exp->__toString();
+                break;
         }
     }
     public function handleOtherException($exp) {
@@ -861,7 +864,7 @@ class ViewResolver {
                 PrettyException::CODE_PRETTY_VIEW_NOTFOUND);
         }
         $viewName = $viewMappings[$viewType];
-        $view = $this->classLoader->load($viewName);
+        $view = $this->classLoader->load($viewName, true);
         if (!$view) {
             throw new PrettyException("Could not render view by $viewName, view class not found.",
                 PrettyException::CODE_PRETTY_CLASS_NOTFOUND);
