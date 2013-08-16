@@ -285,7 +285,7 @@ class ClassLoader {
         return $clz;
     }
 
-    private function classTemplate($origin, $preset = null) {
+    public function classTemplate($origin, $preset = null) {
         $ret = array(
             'isClass' => false,
             'isValue' => false,

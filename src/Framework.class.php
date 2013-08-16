@@ -211,13 +211,10 @@ class Framework {
                 $handler->setClassLoader($this->classloader);
                 $handler->handleException($exp);
                 return;
-            } else {
-                trigger_error($exp->__toString(), E_USER_ERROR);
             }
-        } else {
-            trigger_error($exp->__toString(), E_USER_ERROR);
-            exit();
         }
+        trigger_error($exp->__toString(), E_USER_ERROR);
+        exit();
     }
 }
 
