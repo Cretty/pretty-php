@@ -32,15 +32,15 @@ class ViewResolver {
         }
         $viewMappings = Config::get('view.mappings');
         if (!isset($viewMappings[$viewType])) {
-            throw new PrettyException(
+            throw new Exception(
                 "Could not render view by type $viewType",
-                PrettyException::CODE_PRETTY_VIEW_NOTFOUND);
+                Exception::CODE_PRETTY_VIEW_NOTFOUND);
         }
         $viewName = $viewMappings[$viewType];
-        $view = $this->classLoader->load($viewName);
+        $view = $this->classLoader->load($viewName, true);
         if (!$view) {
-            throw new PrettyException("Could not render view by $viewName, view class not found.",
-                PrettyException::CODE_PRETTY_CLASS_NOTFOUND);
+            throw new Exception("Could not render view by $viewName, view class not found.",
+                Exception::CODE_PRETTY_CLASS_NOTFOUND);
         }
         $view->render($res);
     }
