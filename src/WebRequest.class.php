@@ -58,13 +58,15 @@ class WebRequest {
         $uri = Arrays::valueFrom($_SERVER, 'PATH_INFO') ?:
             Arrays::valueFrom($_SERVER, 'ORIG_PATH_INFO');
         if ($uri === null) {
-            if(preg_match('/\.php(\/?.*)/', $_SERVER['REQUEST_URI'], $matchers)) {
-                $uri = $matchers[1] ?: '/';
+            if (isset($_SERVER['REQUEST_URI'])) {
+                if(preg_match('/\.php(\/?.*)/', $_SERVER['REQUEST_URI'], $matchers)) {
+                    $uri = $matchers[1] ?: '/';
+                } else {
+                    $uri = $_SERVER['REQUEST_URI'];
+                }
             } else {
-                $uri = $_SERVER['REQUEST_URI'];
-                throw Exception::createHttpStatus(404, 'Cannot build request, none of these environments[PATH_INFO, ORIG_PATH_INFO, REQUEST_URI] exists.');
+                throw Exception::createHttpStatus('Cannot build request, none of these environments[PATH_INFO, ORIG_PATH_INFO, REQUEST_URI] exists.', 404);
             }
-
         }
         $this->originUri = $uri;
         if ($uri == '/') {
