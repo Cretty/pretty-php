@@ -44,6 +44,15 @@ class Config {
         self::$store[self::$scope][$key] = $value;
     }
 
+    /**
+     * Check if given key exists in current scope.
+     * @param string $key the key you want to check
+     * @return bool true if exists
+     */
+    public static function exists($key) {
+        return isset(self::$store[self::$scope][$key]);
+    }
+
 
     /**
      * Unset the value of given key in current scope

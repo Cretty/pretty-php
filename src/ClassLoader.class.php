@@ -203,11 +203,12 @@ class ClassLoader {
                 $file = $this->parseDomainFile($name);
                 break;
             case '#':
+                $key = substr($desc, 2);
                 return $this->classTemplate(
                     $desc,
                     array(
                         'isValue' => true,
-                        'value' => Config::get(substr($desc, 2))
+                        'value' => Config::exists($key) ? $desc : Config::get($key)
                     )
                 );
             case '*':
