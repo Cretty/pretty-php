@@ -39,6 +39,7 @@ class ExceptionHandler {
                 $statusCode = $exp->getHttpCode();
                 @header("http/1.1 {$statusCode}");
                 $this->resolveView($exp);
+                break;
             default:
                 echo $exp->__toString();
                 break;

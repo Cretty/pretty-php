@@ -127,7 +127,7 @@ class Framework {
      */
     private function runActionAndfilter($webRequest, $action, $filters) {
         if (!$action) {
-            throw Exception::createHttpStatus('Not Found', 404);
+            throw Exception::createHttpStatus('The url you requested: [' . $webRequest->getOriginUri() . '] was not found.', 404);
         }
         $action->setWebRequest($webRequest);
         foreach ($filters as $key => $filter) {
