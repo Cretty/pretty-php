@@ -525,6 +525,7 @@ class ExceptionHandler {
                 $statusCode = $exp->getHttpCode();
                 @header("http/1.1 {$statusCode}");
                 $this->resolveView($exp);
+                break;
             default:
                 echo $exp->__toString();
                 break;
@@ -637,7 +638,7 @@ class Framework {
     }
     private function runActionAndfilter($webRequest, $action, $filters) {
         if (!$action) {
-            throw Exception::createHttpStatus('Not Found', 404);
+            throw Exception::createHttpStatus('The url you requested: [' . $webRequest->getOriginUri() . '] was not found.', 404);
         }
         $action->setWebRequest($webRequest);
         foreach ($filters as $key => $filter) {
