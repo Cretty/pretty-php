@@ -303,11 +303,12 @@ class ClassLoader {
                 $file = $this->parseDomainFile($name);
                 break;
             case '#':
+                $key = substr($desc, 2);
                 return $this->classTemplate(
                     $desc,
                     array(
                         'isValue' => true,
-                        'value' => Config::get(substr($desc, 2))
+                        'value' => Config::exists($key) ? $desc : Config::get($key)
                     )
                 );
             case '*':
@@ -433,6 +434,9 @@ class Config {
     }
     public static function put($key, $value) {
         self::$store[self::$scope][$key] = $value;
+    }
+    public static function exists($key) {
+        return isset(self::$store[self::$scope][$key]);
     }
     public static function remove($key) {
         if (isset(self::$store[self::$scope][$key])) {
