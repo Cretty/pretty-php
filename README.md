@@ -59,8 +59,8 @@ Making an url request just like:
 class Index extends Action {
 
     public $helper = '@.helper.IndexHelper';
-    public $dbLink0 = '@+.mysql.MysqlAdapter';
-    public $dbLink1 = '@+.mysql.MysqlAdapter';
+    public $dbLink0 = '@.+mysql.MysqlAdapter';
+    public $dbLink1 = '@.+mysql.MysqlAdapter';
     public $foo = '@*foo';
     
     protected function run() {
