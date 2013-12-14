@@ -19,7 +19,7 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
             'class.alias' =>[
                 'Router' => '@%SmartRouter'
             ],
-            'class.lib' => $_SERVER['DOCUMENT_ROOT'] . '/lib'
+            'class.lib' => __DIR__ . '/test_lib'
         ]);
     }
 

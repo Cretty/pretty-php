@@ -322,7 +322,7 @@ class ClassLoader {
     }
 
     private function parseAbsoluteFile($name) {
-        return Config::get('class.lib') . str_replace('\\', '/', $name);
+        return (Config::get('class.lib') ?: Config::get('class.path')) . str_replace('\\', '/', $name);
     }
 
 

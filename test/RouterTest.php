@@ -28,7 +28,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
 
     public function testNotFound() {
         $_SERVER['PATH_INFO'] = 'notfound';
-        $this->expectOutputString('Not Found');
+        $this->expectOutputString('The url you requested: [notfound] was not found.');
         p\Framework::instance($this->baseConfig)->start();
     }
  
