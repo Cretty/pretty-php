@@ -45,7 +45,7 @@ class ClassLoader {
             return $clz['value'];
         }
         if (!class_exists($clz['name'], 0) && !$this->loadDefinition($clz)) {
-            if ($warning) throw new Exception("Class[{$clz['origin']}, {$clz['file']}] not found.", Exception::CODE_PRETTY_CLASS_NOTFOUND);
+            if ($warning) throw new Exception("Class[{$clz['origin']}, {$clz['file']}.class.php|.interface.php|.php] not found.", Exception::CODE_PRETTY_CLASS_NOTFOUND);
             return null;
         }
         $name = $clz['name'];
