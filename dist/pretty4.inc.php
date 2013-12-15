@@ -87,23 +87,17 @@ class Arrays {
         return $this;
     }
     public function mergeWith($data, $replace = true) {
+        if ($replace) {
+            $tmp = array_replace_recursive($this->store, $data);
+        } else {
+            $tmp = array_replace_recursive($data, $this->store);
+        }
         if($this->isReference) {
-            foreach ($data as $key => $value) {
-                if ($replace) {
-                    $this->store[$key] = $value;
-                    continue;
-                }
-                if (isset($this->store[$key])) {
-                    continue;
-                }
+            foreach ($tmp as $key => $value) {
                 $this->store[$key] = $value;
             }
         } else {
-            if ($replace) {
-                $this->store = $data + $this->store;
-            } else {
-                $this->store = $this->store + $data;
-            }
+            $this->store = $tmp;
         }
     }
     public function pushTo($key, $value) {
@@ -575,7 +569,7 @@ class Framework {
     private static $_instance;
     private $classloader;
     public static function instance($config = array()) {
-        Config::initDefault($config + self::$defaults);
+        Config::initDefault(array_replace_recursive(self::$defaults, $config));
         if (($ns = Config::get('class.namespace')) === null) {
             Config::put('class.namespace', '\\');
         }
