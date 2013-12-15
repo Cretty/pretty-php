@@ -96,4 +96,100 @@ class ArraysTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($copy->get('b'), 'b');
         $this->assertEquals($copy->get('c'), 'c');
     }
+
+    public function testMerge() {
+        $first = [
+            'a' => [1, 2, 3],
+            'b' => 1,
+            'c' => 1,
+            'e' => [1, 2],
+            'f' => ['a' => 1, 'b' => 2]
+        ];
+        $second = [
+            'a' => 4, 
+            'b' => ['a', 'b'],
+            'c' => 'c',
+            'd',
+            'e' => [3],
+            'f' => ['a' => 4, 'c' => 1]
+        ];
+
+        $expects0 = [
+            'a' => 4,
+            'b' => [
+                0 => 'a',
+                1 => 'b',
+            ],
+            'c' => 'c',
+            'e' => [
+                0 => 3,
+                1 => 2,
+            ],
+            'f' => [
+                'a' => 4,
+                'b' => 2,
+                'c' => 1,
+            ],
+            0 => 'd',
+        ];
+
+        $expects1 = [
+            'a' => [
+                0 => 1,
+                1 => 2,
+                2 => 3
+            ],
+            'b' => 1,
+            'c' => 1,
+            0 => 'd',
+            'e' => [
+                0 => 1,
+                1 => 2
+            ],
+            'f' => [
+                'a' => 1,
+                'c' => 1,
+                'b' => 2
+            ]
+        ];
+        $class = new \ReflectionClass('\net\shawn_huang\pretty\Arrays');
+        $property = $class->getProperty('store');
+        $property->setAccessible(true);
+
+        $arr0 = new Arrays($first);
+        $arr0->mergeWith($second); 
+        $this->assertEquals($expects0, $property->getValue($arr0));
+
+        $arr1 = new Arrays($second);
+        $arr1->mergeWith($first); 
+        $this->assertEquals($expects1, $property->getValue($arr1));
+
+        $arr3 = new Arrays($first);
+        $arr3->mergeWith($second, false);
+        $this->assertEquals($expects1, $property->getValue($arr3));
+
+        $arr4 = new Arrays($second);
+        $arr4->mergeWith($first, false);
+        $this->assertEquals($expects0, $property->getValue($arr4));
+
+        $firstCopy = $first;
+        $ref0 = new Arrays($firstCopy, true);
+        $ref0->mergeWith($second);
+        $this->assertEquals($firstCopy, $expects0);
+
+        $firstCopy = $first;
+        $ref1 = new Arrays($firstCopy, true);
+        $ref1->mergeWith($second, false);
+        $this->assertEquals($firstCopy, $expects1);
+
+        $secondCopy = $second;
+        $ref2 = new Arrays($secondCopy, true);
+        $ref2->mergeWith($first);
+        $this->assertEquals($secondCopy, $expects1);
+
+        $secondCopy = $second;
+        $ref3 = new Arrays($secondCopy, true);
+        $ref3->mergeWith($first, false);
+        $this->assertEquals($secondCopy, $expects0);
+    }
 }

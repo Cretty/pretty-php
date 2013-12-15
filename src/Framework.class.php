@@ -37,7 +37,7 @@ class Framework {
      * @return Framework pretty framework instance
      */
     public static function instance($config = array()) {
-        Config::initDefault($config + self::$defaults);
+        Config::initDefault(array_replace_recursive(self::$defaults, $config));
         if (($ns = Config::get('class.namespace')) === null) {
             Config::put('class.namespace', '\\');
         }

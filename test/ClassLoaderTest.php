@@ -50,10 +50,20 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue(is_a($view, '\net\shawn_huang\pretty\view\JsonView'));
     }
 
+    public function testLib() {
+        Config::put('class.namespace', '\aa');
+        $cl = new p\ClassLoader();
+        $expr = '@LibClass';
+        $lib = $cl->load($expr);
+        $this->assertTrue(is_a($lib, '\LibClass'));
+        $lib = $cl->load('@LibClass2', false, false);
+        $this->assertNull($lib);
+    }
+
     public function testWarning() {
         $cl = new p\ClassLoader();
         //Class[@nothing, /Users/Shawn/Documents/Projects/php/pretty-4/test/test_classes/nothing] not found.
-        $message = 'Class[@nothing, ' . __DIR__ . '/test_classes/nothing] not found.';
+        $message = 'Class[@nothing, ' . __DIR__ . '/test_classes/nothing.class.php|.interface.php|.php] not found.';
         try {
             $cl->load('@nothing', true);
             $this->assertFalse(1);
@@ -62,65 +72,90 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
         }
     }
 
+    public function testClassTemplate() {
+        $cl = new p\ClassLoader();
+        $expect = [
+            'isClass' => false,
+            'isValue' => false,
+            'name' => null,
+            'type' => null,
+            'isNew' => false,
+            'file' => null,
+            'preloads' => null,
+            'args' => null,
+            'value' => null,
+            'errors' => null,
+            'loadChildren' => true,
+            'origin' => null
+        ];
+        $this->assertEquals($expect, $cl->classTemplate(null));
+        $expect['name'] = '123';
+        $this->assertEquals($expect, $cl->classTemplate(null, ['name' => '123']));
+    }
+
     public function testExplainClasses() {
         # test domain
         $cl = new p\ClassLoader();
         $str = '@foo';
         $arr = $cl->explainClasses($str);
-        $expect = [
-            'isClass' => true,
-            'isValue' => false,
+        $expect = $cl->classTemplate($str, [
             'name' => '\foo',
+            'isClass' => true,
             'type' => p\CLASS_TYPE_DOMAIN,
-            'isNew' => false,
-            'file' => __DIR__ . '/test_classes/foo',
-            'preloads' => null,
-            'args' => null,
-            'value' => null,
-            'errors' => null,
-            'loadChildren' => true,
-            'origin' => '@foo'
-        ];
+            'file' => __DIR__ . '/test_classes/foo'
+        ]);
         $this->assertEquals($expect, $arr);
 
         # test pretty
         $str = '@%foo';
         $arr = $cl->explainClasses($str);
-        $expect = [
-            'isClass' => true,
-            'isValue' => false,
+        $expect = $cl->classTemplate($str, [
             'name' => '\net\shawn_huang\pretty\foo',
+            'isClass' => true,
             'type' => p\CLASS_TYPE_PRETTY,
-            'isNew' => false,
-            'file' => dirname(__DIR__) . '/src/foo',
-            'preloads' => null,
-            'args' => null,
-            'value' => null,
-            'errors' => null,
-            'loadChildren' => true,
-            'origin' => '@%foo'
-        ];
+            'file' => dirname(__DIR__) . '/src/foo'
+        ]);
         $this->assertEquals($expect, $arr);
 
         # test domain
         $str = '\foo';
         $arr = $cl->explainClasses($str);
-        $expect = [
-            'isClass' => true,
-            'isValue' => false,
+        $expect = $cl->classTemplate($str, [
             'name' => '\foo',
+            'isClass' => true,
             'type' => p\CLASS_TYPE_DOMAIN,
-            'isNew' => false,
-            'file' => __DIR__ . '/test_classes/foo',
-            'preloads' => null,
-            'args' => null,
-            'value' => null,
-            'errors' => null,
-            'loadChildren' => true,
-            'origin' => '\foo'
-        ];
+            'file' => __DIR__ . '/test_classes/foo'
+        ]);
         $this->assertEquals($expect, $arr);
 
+        # test absolute
+        p\Config::put('class.namespace', '\aa');
+
+        $cl = new p\ClassLoader();
+        $str = '\foo';
+        $arr = $cl->explainClasses($str);
+        $expect = $cl->classTemplate($str, [
+            'name' => '\foo',
+            'isClass' => true,
+            'type' => p\CLASS_TYPE_ABSOLUTE,
+            'file' => __DIR__ . '/test_lib/foo'
+        ]);
+        $this->assertEquals($expect, $arr);
+        $str = '@foo';
+        $arr = $cl->explainClasses($str);
+        $expect['origin'] = '@foo';
+        $this->assertEquals($expect, $arr);
+
+        # test domain
+        $str = '@.foo';
+        $arr = $cl->explainClasses($str);
+        $expect = $expect = $cl->classTemplate($str, [
+            'name' => '\aa\foo',
+            'isClass' => true,
+            'type' => p\CLASS_TYPE_DOMAIN,
+            'file' => __DIR__ . '/test_classes/foo'
+        ]);
+        $this->assertEquals($expect, $arr);
     }
 
 }
