@@ -21,7 +21,7 @@ class WebResource {
      * @param mixed $default returns $default if $key does not exists in $_GET
      */
     public function get($key, $default = null) {
-        return Arrays::get($_GET, $key, $default);
+        return Arrays::valueFrom($_GET, $key, $default);
     } 
 
     /**
@@ -30,7 +30,7 @@ class WebResource {
      * @param mixed $default returns $default if $key does not exists in $_REQUEST
      */
     public function getRequest($key, $default = null) {
-        return Arrays::get($_REQUEST, $key, $default);
+        return Arrays::valueFrom($_REQUEST, $key, $default);
     }
 
     /**
@@ -39,7 +39,7 @@ class WebResource {
      * @param mixed $default returns $default if $key does not exists in $_POST
      */
     public function getPost($key, $default = null) {
-        return Arrays::get($_POST, $key, $default);
+        return Arrays::valueFrom($_POST, $key, $default);
     }
 
     /**
@@ -78,7 +78,7 @@ class WebResource {
      * @return the data, null if the $key does not exits.
      */
     public function getData($key = null) {
-        return $key !== null ? Arrays::get($this->data, $key) : $this->data;
+        return $key !== null ? Arrays::valueFrom($this->data, $key) : $this->data;
     }
 
     /**
