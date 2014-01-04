@@ -944,13 +944,13 @@ class WebResource {
     private $view = null;
     private $webRequest;
     public function get($key, $default = null) {
-        return Arrays::get($_GET, $key, $default);
+        return Arrays::valueFrom($_GET, $key, $default);
     } 
     public function getRequest($key, $default = null) {
-        return Arrays::get($_REQUEST, $key, $default);
+        return Arrays::valueFrom($_REQUEST, $key, $default);
     }
     public function getPost($key, $default = null) {
-        return Arrays::get($_POST, $key, $default);
+        return Arrays::valueFrom($_POST, $key, $default);
     }
     public function put($key, $value = null) {
         if ($this->isReadonly()) {
@@ -969,7 +969,7 @@ class WebResource {
         $this->data = $data;
     }
     public function getData($key = null) {
-        return $key !== null ? Arrays::get($this->data, $key) : $this->data;
+        return $key !== null ? Arrays::valueFrom($this->data, $key) : $this->data;
     }
     public function isReadonly() {
         return $this->readonly;
