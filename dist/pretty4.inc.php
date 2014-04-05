@@ -541,9 +541,11 @@ class ExceptionHandler {
             } catch (Exception $e) {
                 echo $e->__toString();
                 echo $exp->__toString();
+                echo "\r\n";
             }
         } else {
             echo $exp->getMessage();
+            echo "\r\n";
         }
     }
 }
