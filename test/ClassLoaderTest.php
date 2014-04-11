@@ -158,6 +158,41 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($expect, $arr);
     }
 
+    public function testReference() {
+        $cl = new p\ClassLoader();
+        $foo1 = $cl->load('@.Foo<123321');
+        $foo2 = $cl->load('@.Foo<abc');
+        $foo3 = $cl->load('@.+Foo');
+        $foo4 = $cl->load('@.Foo');
+        $foo5 = $cl->load('@.Foo<abc');
+        $foo6 = $cl->load('@.Foo');
+
+        $foo1->b = 1;
+        $foo2->b = 2;
+        $foo3->b = 3;
+        $foo4->b = 4;
+        $foo5->b = 5;
+        $foo6->b = 6;
+
+        $this->assertEquals($foo1->a, '123321');
+        $this->assertEquals($foo1->b, 1);
+
+        $this->assertEquals($foo2->a, 'abc');
+        $this->assertEquals($foo2->b, 2);
+
+        $this->assertEquals($foo3->a, 'a');
+        $this->assertEquals($foo3->b, 3);
+
+        $this->assertEquals($foo4->a, 'a');
+        $this->assertEquals($foo4->b, 6);
+
+        $this->assertEquals($foo5->a, 'abc');
+        $this->assertEquals($foo5->b, 5);
+
+        $this->assertEquals($foo6->a, 'a');
+        $this->assertEquals($foo6->b, 6);
+    }
+
     public function testConfig() {
         Config::put('foo', 'bar');
         $cl = new p\ClassLoader();

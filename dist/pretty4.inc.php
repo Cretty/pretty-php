@@ -138,7 +138,7 @@ class ClassLoader {
         if (is_string($clz)) {
             $clz = $this->explainClasses($clz);
         }
-        if (!$clz['isNew'] && isset($this->pool[$clz['name']])) {
+        if (!$clz['isNew'] && !$clz['args'] && isset($this->pool[$clz['name']])) {
             return $this->pool[$clz['name']];
         }
         if (!$clz['isClass']) {
@@ -157,6 +157,9 @@ class ClassLoader {
         }
         if ($initProperties) {
             $this->loadProperties($instance);
+        }
+        if (!$clz['isNew'] && !$clz['args']) {
+            $this->pool[$clz['name']] = $instance;
         }
         return $instance;
     }
