@@ -2,7 +2,7 @@
 
 error_reporting(E_ALL);
 ini_set('display_errors', 'on');
-require_once '../src/Pretty4.inc.php';
+@require_once '../src/Pretty4.inc.php';
 use \net\shawn_huang\pretty as p;
 use \net\shawn_huang\pretty\Config;
 /**
@@ -26,7 +26,7 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
     public function testAll() {
         $cl = new p\ClassLoader;
         $obj = $cl->load('@*Router', true, true);
-        
+
         $this->assertTrue(class_exists('\net\shawn_huang\pretty\Action'));
         $this->assertTrue(is_a($obj, '\net\shawn_huang\pretty\SmartRouter'));
         $this->assertTrue(is_a($obj->classLoader, '\net\shawn_huang\pretty\ClassLoader'));
@@ -156,6 +156,23 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
             'file' => __DIR__ . '/test_classes/foo'
         ]);
         $this->assertEquals($expect, $arr);
+    }
+
+    public function testConfig() {
+        Config::put('foo', 'bar');
+        $cl = new p\ClassLoader();
+        $val = $cl->load('@#foo');
+        $this->assertEquals('bar', $val);
+
+        $val = $cl->load('@#nothing');
+        $this->assertEquals('@#nothing', $val);
+
+        Config::put('isFalse', false);
+        $val = $cl->load('@#isFalse');
+        $this->assertFalse($val);
+
+        $val = $cl->load('@#class.aliasLimit');
+        $this->assertEquals($val, Config::get('class.aliasLimit'));
     }
 
 }

@@ -194,12 +194,12 @@ class ClassLoader {
         }
         switch($clz['type']) {
             case CLASS_TYPE_ABSOLUTE:
-                $path = Config::get('class.extraPath', Config::get('class.path')) 
+                $path = Config::get('class.extraPath', Config::get('class.path'))
                     . str_replace('\\', '/', $clz['name']);
                 break;
             case CLASS_TYPE_DOMAIN:
                 $subPath = str_replace(
-                    array($this->ns ?: '', ''), 
+                    array($this->ns ?: '', ''),
                     array('\\', '/'),
                     $clz['name']
                 );
@@ -207,7 +207,7 @@ class ClassLoader {
                 break;
             case CLASS_TYPE_PRETTY:
                 $subPath = str_replace(
-                    array($this->pns, ''), 
+                    array($this->pns, ''),
                     array('\\', '/'),
                     $clz['name']
                 );
@@ -280,7 +280,7 @@ class ClassLoader {
                     array($prefix, '%', '.', '+'),
                     array($this->pns, '\\', '\\', ''),
                     $desc
-                ); 
+                );
                 $type = CLASS_TYPE_PRETTY;
                 $file = $this->parsePrettyFile($name);
                 break;
@@ -302,7 +302,7 @@ class ClassLoader {
                     $desc,
                     array(
                         'isValue' => true,
-                        'value' => Config::exists($key) ? $desc : Config::get($key)
+                        'value' => Config::exists($key) ? Config::get($key) : $desc
                     )
                 );
             case '*':
@@ -346,7 +346,7 @@ class ClassLoader {
         $arr = explode('>', $desc);
         $count = count($arr);
         if ($count > 1) {
-            for ($i = 0; $i < $count - 1; $i++) { 
+            for ($i = 0; $i < $count - 1; $i++) {
                 $preload = $this->explainClass($arr[$i]);
                 if (!$preload['isClass']) {
                     syslog(LOG_DEBUG, "Explain $desc failed, {$arr[$i]} isnt a class or interface");

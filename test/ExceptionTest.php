@@ -28,7 +28,7 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase {
     public function testErr1() {
         $f = p\Framework::instance($this->config);
         $_SERVER['PATH_INFO'] = '/err1';
-        $this->expectOutputString('error 1');
+        $this->expectOutputString("error 1\r\n");
         $f->start();
     }
 }
