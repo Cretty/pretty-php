@@ -573,7 +573,12 @@ class Framework {
     );
     private static $_instance;
     private $classloader;
-    public static function instance($config = array()) {
+    public static function instance($config = null) {
+        if ($config === null && self::$_instance) {
+            return self::$_instance;
+        } elseif ($config === null) {
+            $config = array();
+        }
         Config::initDefault(array_replace_recursive(self::$defaults, $config));
         if (($ns = Config::get('class.namespace')) === null) {
             Config::put('class.namespace', '\\');
