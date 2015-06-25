@@ -35,9 +35,11 @@ class V {
     private $cl;
     private $meta;
     private $runnable;
+    private $data;
+    private $view;
 
     private function __construct() {
-        $this->cl = new \net\shawn_huang\pretty\ClassLoader();
+        $this->data = array();
     }
 
     public function _run($callback) {
@@ -79,5 +81,31 @@ class V {
 
     public function _c($expression, $invoke = true, $warnings = true) {
         return $this->cl->load($expression, $invoke, $warnings);
+    }
+
+    public function _put($key, $v = null) {
+        if (is_array($key)) {
+            $this->data = $key + $this->date;
+            return;
+        }
+        $this->data[$key] = $v;
+        return $this;
+    }
+
+    public function _data($key = null, $default = null) {
+        if ($key === false || $key === null) {
+            return $this->data;
+        } else {
+            return Arrays::valueFrom($key, $default);
+        }
+    }
+
+    public function _view() {
+        if (func_num_args()) {
+            $this->view = func_get_args();
+            return $this;
+        } else {
+            return $this->view;
+        }
     }
 }

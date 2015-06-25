@@ -27,8 +27,6 @@ class ActionV extends Action {
         $func = $this->runnable;
         if (is_callable($func)) {
             $func($this);
-        } else {
-            throw new Exception('No runnable found');
         }
     }
 
@@ -39,6 +37,8 @@ class ActionV extends Action {
             if (is_file($path)) {
                 require $path;
                 $this->runnable = V::getRunnable();
+                $this->put(V::data());
+                $this->setView(V::view());
                 return $this->isV = true;
             }
         } else {
