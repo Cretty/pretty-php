@@ -112,7 +112,7 @@ class Framework {
         } else {
             $action = $this->classloader->load(is_object($av) ? $av->getExp() : $av, 1, 1);
         }
-        $this->runActionAndfilter($webRequest, $action, $filters);
+        $this->runActionAndFilter($webRequest, $action, $filters);
         $this->runForwardAction($action, Config::get(Consts::CONF_ROUTER_FORWARD_LIMIT, 5));
         $this->display($action);
     }
@@ -137,7 +137,7 @@ class Framework {
      * @param Action $action action object
      * @param array $filters an array carries filters
      */
-    private function runActionAndfilter($webRequest, $action, $filters) {
+    private function runActionAndFilter($webRequest, $action, $filters) {
         if (!$action) {
             throw Exception::createHttpStatus('The url you requested: [' . $webRequest->getOriginUri() . '] was not found.', 404);
         }
@@ -176,7 +176,7 @@ class Framework {
                 throw new Exception('Forward Action not found', Exception::CODE_PRETTY_CLASS_NOTFOUND);
             }
             $fwa->copyFrom($action);
-            $this->runActionAndfilter($fwa, array());
+            $this->runActionAndFilter($action->getWebRequest(), $fwa, array());
             if ($fwa->getForward()) {
                 $this->runForwardAction($fwa, $remains);
             }
