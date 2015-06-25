@@ -73,7 +73,7 @@ class WebRequest {
             $this->uri = Config::get('site.index', '/index');
         } else {
             $this->uri = $uri;
-        } 
+        }
     }
 
     /**
@@ -129,14 +129,16 @@ class WebRequest {
         return $this->uri;
     }
 
-    
+
     public function putExtra($key, $value) {
         $this->extra[$key] = $value;
     }
 
     public function getExtra($key, $default = null) {
-        return isset($this->extra[$key]) ?
-            $this->extra[$key] : $default;
+        if ($key === null) {
+            return $this->extra;
+        }
+        return Arrays::valueFrom($this->extra, $default);
     }
 
 }

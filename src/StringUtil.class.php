@@ -45,9 +45,9 @@ class StringUtil {
      * @param string $ori origin string
      * @return string parsed string
      */
-    public static function toCamelCase($ori) {
+    public static function toCamelCase($ori, $exp = '/_([a-z])/') {
         $func = create_function('$c', 'return strtoupper($c[1]);');
-        return preg_replace_callback('/_([a-z])/', $func, $ori);
+        return preg_replace_callback($exp, $func, $ori);
     }
 
     /**
@@ -55,10 +55,9 @@ class StringUtil {
      * @param string $str string to handle
      * @return array returns an array contains the head and the tail.
      */
-    public static function getCamelTail($str) {
-        $exp = '/^(.+)([A-Z][a-z0-9]+)$/';
+    public static function getCamelTail($str, $exp = '/^(.+)([A-Z][a-z0-9]+)$/') {
         preg_match($exp, $str, $result);
-        return count($result) == 0 ? array($str, '') : array($result[1], $result[2]);    
+        return count($result) == 0 ? array($str, '') : array($result[1], $result[2]);
     }
 
 }

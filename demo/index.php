@@ -15,4 +15,5 @@ $config = array(
 
 # Get the instance of framework, then call the start method
 # That all, the basic useage of pretty-php ver 4.
+pretty\V::bind();
 pretty\Framework::instance($config)->start();

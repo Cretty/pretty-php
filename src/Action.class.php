@@ -33,6 +33,8 @@ abstract class Action extends WebResource {
     private $forward = null;
     private $webRequest;
 
+    public $classloader = '@%ClassLoader';
+
     /**
      * Start action. This function will be call by Router.
      * Check the action status and decides weather or not call the "run" method.

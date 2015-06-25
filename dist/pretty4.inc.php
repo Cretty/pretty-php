@@ -10,6 +10,7 @@ abstract class Action extends WebResource {
     private $actionStatus = 0;
     private $forward = null;
     private $webRequest;
+    public $classloader = '@%ClassLoader';
     public final function startAction() {
         switch($this->actionStatus) {
             case self::STATUS_NORMAL:
@@ -49,6 +50,52 @@ abstract class Action extends WebResource {
     }
     public function getWebRequest() {
         return $this->webRequest;
+    }
+}
+class ActionV extends Action {
+    public static function loadV($name) {
+        $av = new ActionV($name, false);
+        $av->classloader = V::c($av->classloader);
+        $av->init();
+        return $av;
+    }
+    private $runnable;
+    private $exp;
+    private $isV;
+    public function __construct($exp, $init = true) {
+        $this->exp = $exp;
+        if ($init) {
+            $this->init();
+        }
+    }
+    protected function run() {
+        $func = $this->runnable;
+        if (is_callable($func)) {
+            $func($this);
+        } else {
+            throw new Exception('No runnable found');
+        }
+    }
+    private function init() {
+        $clz = $this->classloader->explainClasses($this->exp);
+        if ($clz['isClass']) {
+            $path = $clz['file'] . '.v.php';
+            if (is_file($path)) {
+                require $path;
+                $this->runnable = V::getRunnable();
+                return $this->isV = true;
+            }
+        } else {
+            throw new Exception("Forward Action [{$this->exp}] not found", Exception::CODE_PRETTY_CLASS_NOTFOUND);
+        }
+        $this->exp = $clz;
+        return $this->isV = false;
+    }
+    public function isActionV() {
+        return $this->isV;
+    }
+    public function getExp() {
+        return $this->exp;
     }
 }
 class Arrays {
@@ -126,7 +173,7 @@ class ClassLoader {
     private $prettyPath;
     public function __construct() {
         $this->pool['\\' . __CLASS__] = $this;
-        $this->ns = Config::get('class.namespace', '\\');
+        $this->ns = Config::get(Consts::CONF_CLASS_NS, '\\');
         $this->ns = $this->ns == '\\' ? '\\' : $this->ns . '\\';
         $this->pns = '\\' . __NAMESPACE__;
         $this->prettyPath = __DIR__;
@@ -197,7 +244,7 @@ class ClassLoader {
         }
         switch($clz['type']) {
             case CLASS_TYPE_ABSOLUTE:
-                $path = Config::get('class.extraPath', Config::get('class.path'))
+                $path = Config::get(Consts::CONF_CLASS_EXTRA_PATH, Config::get(Consts::CONF_CLASS_PATH))
                     . str_replace('\\', '/', $clz['name']);
                 break;
             case CLASS_TYPE_DOMAIN:
@@ -206,7 +253,7 @@ class ClassLoader {
                     array('\\', '/'),
                     $clz['name']
                 );
-                $path = Config::get('class.path') . $subPath;
+                $path = Config::get(Consts::CONF_CLASS_PATH) . $subPath;
                 break;
             case CLASS_TYPE_PRETTY:
                 $subPath = str_replace(
@@ -272,7 +319,7 @@ class ClassLoader {
             return $this->classTemplate($desc, array('errors' => 'not match pattern:' . CLASS_PATTERN));
         }
         $prefix = $desc{0};
-        $alias = Config::get('class.alias');
+        $alias = Config::get(Consts::CONF_CLASS_ALIAS);
         $isNew = false;
         switch($desc{1}) {
             case '%':
@@ -309,9 +356,9 @@ class ClassLoader {
                     )
                 );
             case '*':
-                $aliasLimit = Config::get('class.aliasLimit');
+                $aliasLimit = Config::get(Consts::CONF_CLASS_ALIAS_LIMIT);
                 if ($aliasDeep >= $aliasLimit) {
-                    throw new Exception("Alias too deep, Limit " . Config::get('class.aliasLimit'),
+                    throw new Exception("Alias too deep, Limit " . Config::get(Consts::CONF_CLASS_ALIAS_LIMIT),
                         Exception::CODE_PRETTY_CLASS_INI_FAILED);
                 }
                 $target = substr($desc, 2);
@@ -407,14 +454,14 @@ class ClassLoader {
         );
     }
     private function parseDomainFile($name) {
-        return Config::get('class.path') . str_replace(
+        return Config::get(Consts::CONF_CLASS_PATH) . str_replace(
             array($this->ns, '\\'),
             array('/', '/'),
             $name
         );
     }
     private function parseAbsoluteFile($name) {
-        return (Config::get('class.lib') ?: Config::get('class.path')) . str_replace('\\', '/', $name);
+        return (Config::get(Consts::CONF_CLASS_LIB) ?: Config::get(Consts::CONF_CLASS_PATH)) . str_replace('\\', '/', $name);
     }
 }
 class Config {
@@ -459,6 +506,25 @@ class Config {
     public static function switchTo($scope) {
         self::$scope = $scope;
     }
+}
+class Consts {
+    const CONF_CLASS_NS = 'class.namespace';
+    const CONF_CLASS_PATH = 'class.path';
+    const CONF_CLASS_EXTRA_PATH = 'class.extraPath';
+    const CONF_CLASS_ALIAS = 'class.alias';
+    const CONF_CLASS_ALIAS_LIMIT = 'class.aliasLimit';
+    const CONF_CLASS_LIB = 'class.lib';
+    const CONF_ROUTER_MAPPINGS = 'router.mappings';
+    const CONF_ROUTER_FILTER_LIMIT = 'router.filterLimits';
+    const CONF_ROUTER_ACTION_NS = 'class.actionNamespace';
+    const CONF_ROUTER_FILTER_NS = 'class.filterNamespace';
+    const CONF_ROUTER_FALLBACK_LIMIT = 'class.maxFallbacks';
+    const CONF_ROUTER_FORWARD_LIMIT = 'action.forwardLimits';
+    const CONF_VIEW_MAPPINGS = 'view.mappings';
+    const CONF_VIEW_DEFAULT = 'view.defaultView';
+    const CONF_VIEW_DEFAULT_TYPE = 'view.defaultViewType';
+    const CONF_GUARD_MAPPINGS = 'guardians.mappings';
+    const CONF_GUARD_REWIND_LIMIT = 'guardians.maxRewinds';
 }
 class Exception extends \Exception {
     const CODE_HTTP_INTERNAL_ERROR              = 500;
@@ -558,18 +624,18 @@ interface Filter {
 }
 class Framework {
     protected static $defaults = array(
-        'class.alias' => array(
+        Consts::CONF_CLASS_ALIAS => array(
             'Router' => '@%SmartRouter',
             'DefaultRouter' => '@%SmartRouter',
             'CacheAdapter' => '@%CacheAdapter',
             'ViewResolver' => '@%ViewResolver',
             'ExceptionHandler' => '@%ExceptionHandler'
         ),
-        'class.aliasLimit' => 10,
-        'view.mappings' => array(
+        Consts::CONF_CLASS_ALIAS_LIMIT => 10,
+        Consts::CONF_VIEW_MAPPINGS => array(
             'json' => '@%view.JsonView'
         ),
-        'view.defaultView' => 'json'
+        Consts::CONF_VIEW_DEFAULT => 'json'
     );
     private static $_instance;
     private $classloader;
@@ -580,16 +646,16 @@ class Framework {
             $config = array();
         }
         Config::initDefault(array_replace_recursive(self::$defaults, $config));
-        if (($ns = Config::get('class.namespace')) === null) {
-            Config::put('class.namespace', '\\');
+        if (($ns = Config::get(Consts::CONF_CLASS_NS)) === null) {
+            Config::put(Consts::CONF_CLASS_NS, '\\');
         }
-        if (!isset($config['class.actionNamespace'])) {
+        if (!isset($config[Consts::CONF_ROUTER_ACTION_NS])) {
             $ans = $ns == '\\' ? '\action' : "$ns\\action";
-            Config::put('class.actionNamespace', $ans);
+            Config::put(Consts::CONF_ROUTER_ACTION_NS, $ans);
         }
-        if (!isset($config['class.filterNamespace'])) {
+        if (!isset($config[Consts::CONF_ROUTER_FILTER_NS])) {
             $fns = $ns == '\\' ? '\filter' : "$ns\\filter";
-            Config::put('class.filterNamespace', $fns);
+            Config::put(Consts::CONF_ROUTER_FILTER_NS, $fns);
         }
         if (!self::$_instance) {
             self::$_instance = new Framework();
@@ -608,9 +674,10 @@ class Framework {
     }
     protected function processPretty() {
         $this->classloader = new ClassLoader();
-        $webRequest = new WebRequest();
+        V::setClassLoader($this->classloader);
+        $webRequest = $this->classloader->load('@%WebRequest');
         $guardians = array();
-        if ($gds = Config::get('guardians.mappings')) {
+        if ($gds = Config::get(Consts::CONF_GUARD_MAPPINGS)) {
             foreach($gds as $key => $value) {
                 $guardian = $this->classloader->load($value, true, true);
                 if (!$guardian) {
@@ -619,7 +686,7 @@ class Framework {
                 }
                 $guardians[$key] = $guardian;
             }
-            $this->guard($guardians, $webRequest, Config::get('guardians.maxRewinds', 10));
+            $this->guard($guardians, $webRequest, Config::get(Consts::CONF_GUARD_REWIND_LIMIT, 10));
             if ($webRequest->getCode() == WebRequest::REWRITE_TERMINATE) {
                 return;
             }
@@ -629,11 +696,15 @@ class Framework {
             throw new Exception('Framework started failed. Could not load the router.',
                                     Exception::CODE_PRETTY_MISSING_CORE_CLASSES);
         }
-        $clzName = $router->findAction($webRequest);
+        $av = $router->findAction($webRequest);
         $filters = $router->findFilters($webRequest);
-        $action = $this->classloader->load($clzName, 1, 1);
+        if (is_object($av) && $av->isActionV()) {
+            $action = $av;
+        } else {
+            $action = $this->classloader->load(is_object($av) ? $av->getExp() : $av, 1, 1);
+        }
         $this->runActionAndfilter($webRequest, $action, $filters);
-        $this->runForwardAction($action, Config::get('action.forwardLimits', 5));
+        $this->runForwardAction($action, Config::get(Consts::CONF_ROUTER_FORWARD_LIMIT, 5));
         $this->display($action);
     }
     public function display($resource) {
@@ -673,7 +744,10 @@ class Framework {
             throw new Exception('Too many action forwards, check dead loop or increase [action.forwardLimits]', Exception::CODE_PRETTY_ACTION_ERROR);
         }
         if ($fw = $action->getForward()) {
-            $fwa = $this->classloader->load($fw, 1, 1);
+            $fwa = ActionV::loadV($fw);
+            if (!$fwa->isActionV()) {
+                $fwa = $this->classloader->load($fwa->getExp(), 1, 1);
+            }
             if (!$fwa) {
                 throw new Exception('Forward Action not found', Exception::CODE_PRETTY_CLASS_NOTFOUND);
             }
@@ -687,7 +761,7 @@ class Framework {
     }
     private function guard($guardians, $webRequest, $remains) {
         if ($remains <= 0) {
-            throw new Exception('Too much guradian rewinds. Check dead loops in guardians\' rewriting rule or increase [guardians.maxRewrites]',
+            throw new Exception('Too much guradian rewinds. Check dead loops in guardians\' rewriting rule or increase [CONF_GUARD_REWIND_LIMIT]',
                 Exception::CODE_PRETTY_ACTION_ERROR);
         }
         $remains--;
@@ -736,6 +810,7 @@ interface Guardian {
 }
 class SmartRouter {
     public $classLoader = "@%ClassLoader";
+    const FILTER_LIMIT = 5;
     private $filters;
     private $ext;
     public function findAction(WebRequest $request) {
@@ -760,7 +835,7 @@ class SmartRouter {
         return $this->filters;
     }
     private function findInStatic($uri) {
-        if (!($mappings = Config::get('router.mappings'))) {
+        if (!($mappings = Config::get(Consts::CONF_ROUTER_MAPPINGS))) {
             return null;
         }
         foreach ($mappings as $regex => $clz) {
@@ -772,7 +847,7 @@ class SmartRouter {
     }
     private function tearFilters(WebRequest $request) {
         $arr = explode('/', $request->getUri());
-        if (count($arr) < Config::get('router.filterLimits', 5)) {
+        if (count($arr) < Config::get(Consts::CONF_ROUTER_FILTER_LIMIT, self::FILTER_LIMIT)) {
             return;
         }
         foreach ($arr as $key => $value) {
@@ -784,21 +859,27 @@ class SmartRouter {
     }
     private function findActionByNs(WebRequest $request, $uri) {
         $arr = explode('/', $uri);
-        $actionNs = Config::get('class.actionNamespace');
-        if (count($arr) > Config::get('router.filterLimits', 5)) {
+        $actionNs = Config::get(Consts::CONF_ROUTER_ACTION_NS);
+        if (count($arr) > Config::get(Consts::CONF_ROUTER_FILTER_LIMIT, 5)) {
             return null;
         }
-        $fallbackLimit = Config::get('router.maxFallbacks', 2);
+        $fallbackLimit = Config::get(Consts::CONF_ROUTER_FALLBACK_LIMIT, 1);
         $subPaths = array();
         while($fallbackLimit--) {
             $subPath = array_pop($arr);
             $clzName = StringUtil::toPascalCase($subPath);
             $ns = $actionNs . implode('\\', $arr);
             $cname = "$ns\\$clzName";
-            if ($this->classLoader->loadDefinition($cname, $detail)) {
+            $av = ActionV::loadV($cname);
+            if ($av->isActionV()) {
                 $this->filters = $this->loadFilters($arr);
                 $request->putExtra('subPaths', $subPaths);
-                return $detail['name'];
+                return $av;
+            }
+            if ($this->classLoader->loadDefinition($av->getExp(), $detail)) {
+                $this->filters = $this->loadFilters($arr);
+                $request->putExtra('subPaths', $subPaths);
+                return $av->getExp();
             }
             array_unshift($subPaths, $subPath);
         }
@@ -806,7 +887,7 @@ class SmartRouter {
     }
     public function loadFilters($arr) {
         $ret = array();
-        $filterNs = Config::get('class.filterNamespace');
+        $filterNs = Config::get(Consts::CONF_ROUTER_FILTER_NS);
         while(1) {
             $filterName = array_pop($arr);
             if (!$filterName) {
@@ -840,14 +921,76 @@ class StringUtil {
     public static function toPascalCase($ori) {
         return ucfirst(self::toCamelCase($ori));
     }
-    public static function toCamelCase($ori) {
+    public static function toCamelCase($ori, $exp = '/_([a-z])/') {
         $func = create_function('$c', 'return strtoupper($c[1]);');
-        return preg_replace_callback('/_([a-z])/', $func, $ori);
+        return preg_replace_callback($exp, $func, $ori);
     }
-    public static function getCamelTail($str) {
-        $exp = '/^(.+)([A-Z][a-z0-9]+)$/';
+    public static function getCamelTail($str, $exp = '/^(.+)([A-Z][a-z0-9]+)$/') {
         preg_match($exp, $str, $result);
-        return count($result) == 0 ? array($str, '') : array($result[1], $result[2]);    
+        return count($result) == 0 ? array($str, '') : array($result[1], $result[2]);
+    }
+}
+class V {
+    private static $instance;
+    private static function getInstance() {
+        if (self::$instance == null) {
+            self::$instance = new \net\shawn_huang\pretty\V();
+        }
+        return self::$instance;
+    }
+    public static function __callStatic($name, $args) {
+        $v = self::getInstance();
+        $method = "_$name";
+        if (!method_exists($v, $method)) {
+            trigger_error("Call undefined static method $name of V", E_USER_ERROR);
+            return;
+        }
+        return call_user_func_array(array($v, $method), $args);
+    }
+    public function __call($name, $args) {
+        $method = "_$name";
+        if (!method_exists($this, $method)) {
+            trigger_error("Call undefined method $name of V", E_USER_ERROR);
+            return;
+        }
+        return call_user_func_array(array($this, $method), $args);
+    }
+    private $cl;
+    private $meta;
+    private $runnable;
+    private function __construct() {
+        $this->cl = new \net\shawn_huang\pretty\ClassLoader();
+    }
+    public function _run($callback) {
+        $this->runnable = $callback;
+    }
+    public function _getRunnable() {
+        return $this->runnable;
+    }
+    public function _bind($name = 'V') {
+        if ($name) {
+            eval("namespace {class $name extends \\net\\shawn_huang\\pretty\\V {} }");
+        }
+    }
+    public function _setClassLoader($cl) {
+        $this->cl = $cl;
+        $this->meta = $this->cl->load('@%WebRequest');
+        return $this;
+    }
+    public function _meta($key, $default = null) {
+        return $this->meta->getExtra($key, $default);
+    }
+    public function _g($key, $default = null) {
+        return Arrays::valueFrom($_GET, $key, $default);
+    }
+    public function _p($key, $default = null) {
+        return Arrays::valueFrom($_GET, $key, $default);
+    }
+    public function _r($key, $default = null) {
+        return Arrays::valueFrom($_GET, $key, $default);
+    }
+    public function _c($expression, $invoke = true, $warnings = true) {
+        return $this->cl->load($expression, $invoke, $warnings);
     }
 }
 interface View {
@@ -860,13 +1003,13 @@ class ViewResolver {
         switch(count($view)) {
             case 0:
             case 1:
-                $viewType = Config::get('view.defaultViewType', 'json');
+                $viewType = Config::get(Consts::CONF_VIEW_DEFAULT_TYPE, 'json');
                 break;
             default:
                 $viewType = $view[0];
                 break;
         }
-        $viewMappings = Config::get('view.mappings');
+        $viewMappings = Config::get(Consts::CONF_VIEW_MAPPINGS);
         if (!isset($viewMappings[$viewType])) {
             throw new Exception(
                 "Could not render view by type $viewType",
@@ -918,7 +1061,7 @@ class WebRequest {
             $this->uri = Config::get('site.index', '/index');
         } else {
             $this->uri = $uri;
-        } 
+        }
     }
     public function rewrite($uri, $code = self::REWRITE_FORWARD) {
         $this->uri = $uri;
@@ -944,8 +1087,10 @@ class WebRequest {
         $this->extra[$key] = $value;
     }
     public function getExtra($key, $default = null) {
-        return isset($this->extra[$key]) ?
-            $this->extra[$key] : $default;
+        if ($key === null) {
+            return $this->extra;
+        }
+        return Arrays::valueFrom($this->extra, $default);
     }
 }
 class WebResource {

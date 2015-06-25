@@ -16,7 +16,7 @@ class ViewResolver {
     public $classLoader = '@%ClassLoader';
 
     /**
-     * Render and display the action 
+     * Render and display the action
      * @param WebResouce $res the target action
      */
     public function display(WebResource $res) {
@@ -24,13 +24,13 @@ class ViewResolver {
         switch(count($view)) {
             case 0:
             case 1:
-                $viewType = Config::get('view.defaultViewType', 'json');
+                $viewType = Config::get(Consts::CONF_VIEW_DEFAULT_TYPE, 'json');
                 break;
             default:
                 $viewType = $view[0];
                 break;
         }
-        $viewMappings = Config::get('view.mappings');
+        $viewMappings = Config::get(Consts::CONF_VIEW_MAPPINGS);
         if (!isset($viewMappings[$viewType])) {
             throw new Exception(
                 "Could not render view by type $viewType",

@@ -1,4 +1,5 @@
 <?php
+require_once 'Consts.class.php';
 require_once 'Arrays.class.php';
 require_once 'ClassLoader.class.php';
 require_once 'Config.class.php';
@@ -15,3 +16,5 @@ require_once 'ViewResolver.class.php';
 require_once 'WebRequest.class.php';
 require_once 'WebResource.class.php';
 require_once 'Action.class.php';
+require_once 'V.class.php';
+require_once 'ActionV.class.php';

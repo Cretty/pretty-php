@@ -6,7 +6,7 @@ namespace net\shawn_huang\pretty;
  * The main Configuration.
  * You can set config scope to store your staffs.
  * By default, the scope will be set to 'default'.
- * By switching scopes will affect ALL the pretty framework, becasue, pretty 
+ * By switching scopes will affect ALL the pretty framework, becasue, pretty
  * uses Config::get to get each value.
  */
 class Config {
@@ -65,7 +65,7 @@ class Config {
     }
 
     /**
-     * Put missing things into current scope that you want to store. That means if 
+     * Put missing things into current scope that you want to store. That means if
      * the key has already been set, this method wont do anything.
      * @param string $key the of of value
      * @param mixed $value the value you want to store.

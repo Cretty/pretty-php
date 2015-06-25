@@ -25,7 +25,7 @@ class ClassLoader {
 
     public function __construct() {
         $this->pool['\\' . __CLASS__] = $this;
-        $this->ns = Config::get('class.namespace', '\\');
+        $this->ns = Config::get(Consts::CONF_CLASS_NS, '\\');
         $this->ns = $this->ns == '\\' ? '\\' : $this->ns . '\\';
         $this->pns = '\\' . __NAMESPACE__;
         $this->prettyPath = __DIR__;
@@ -100,7 +100,7 @@ class ClassLoader {
         }
         switch($clz['type']) {
             case CLASS_TYPE_ABSOLUTE:
-                $path = Config::get('class.extraPath', Config::get('class.path'))
+                $path = Config::get(Consts::CONF_CLASS_EXTRA_PATH, Config::get(Consts::CONF_CLASS_PATH))
                     . str_replace('\\', '/', $clz['name']);
                 break;
             case CLASS_TYPE_DOMAIN:
@@ -109,7 +109,7 @@ class ClassLoader {
                     array('\\', '/'),
                     $clz['name']
                 );
-                $path = Config::get('class.path') . $subPath;
+                $path = Config::get(Consts::CONF_CLASS_PATH) . $subPath;
                 break;
             case CLASS_TYPE_PRETTY:
                 $subPath = str_replace(
@@ -179,7 +179,7 @@ class ClassLoader {
             return $this->classTemplate($desc, array('errors' => 'not match pattern:' . CLASS_PATTERN));
         }
         $prefix = $desc{0};
-        $alias = Config::get('class.alias');
+        $alias = Config::get(Consts::CONF_CLASS_ALIAS);
         $isNew = false;
         switch($desc{1}) {
             case '%':
@@ -216,9 +216,9 @@ class ClassLoader {
                     )
                 );
             case '*':
-                $aliasLimit = Config::get('class.aliasLimit');
+                $aliasLimit = Config::get(Consts::CONF_CLASS_ALIAS_LIMIT);
                 if ($aliasDeep >= $aliasLimit) {
-                    throw new Exception("Alias too deep, Limit " . Config::get('class.aliasLimit'),
+                    throw new Exception("Alias too deep, Limit " . Config::get(Consts::CONF_CLASS_ALIAS_LIMIT),
                         Exception::CODE_PRETTY_CLASS_INI_FAILED);
                 }
                 $target = substr($desc, 2);
@@ -318,7 +318,7 @@ class ClassLoader {
     }
 
     private function parseDomainFile($name) {
-        return Config::get('class.path') . str_replace(
+        return Config::get(Consts::CONF_CLASS_PATH) . str_replace(
             array($this->ns, '\\'),
             array('/', '/'),
             $name
@@ -326,7 +326,7 @@ class ClassLoader {
     }
 
     private function parseAbsoluteFile($name) {
-        return (Config::get('class.lib') ?: Config::get('class.path')) . str_replace('\\', '/', $name);
+        return (Config::get(Consts::CONF_CLASS_LIB) ?: Config::get(Consts::CONF_CLASS_PATH)) . str_replace('\\', '/', $name);
     }
 
 

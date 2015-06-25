@@ -11,18 +11,18 @@ class Framework {
      * Default framework configuations
      */
     protected static $defaults = array(
-        'class.alias' => array(
+        Consts::CONF_CLASS_ALIAS => array(
             'Router' => '@%SmartRouter',
             'DefaultRouter' => '@%SmartRouter',
             'CacheAdapter' => '@%CacheAdapter',
             'ViewResolver' => '@%ViewResolver',
             'ExceptionHandler' => '@%ExceptionHandler'
         ),
-        'class.aliasLimit' => 10,
-        'view.mappings' => array(
+        Consts::CONF_CLASS_ALIAS_LIMIT => 10,
+        Consts::CONF_VIEW_MAPPINGS => array(
             'json' => '@%view.JsonView'
         ),
-        'view.defaultView' => 'json'
+        Consts::CONF_VIEW_DEFAULT => 'json'
     );
 
     private static $_instance;
@@ -43,16 +43,16 @@ class Framework {
             $config = array();
         }
         Config::initDefault(array_replace_recursive(self::$defaults, $config));
-        if (($ns = Config::get('class.namespace')) === null) {
-            Config::put('class.namespace', '\\');
+        if (($ns = Config::get(Consts::CONF_CLASS_NS)) === null) {
+            Config::put(Consts::CONF_CLASS_NS, '\\');
         }
-        if (!isset($config['class.actionNamespace'])) {
+        if (!isset($config[Consts::CONF_ROUTER_ACTION_NS])) {
             $ans = $ns == '\\' ? '\action' : "$ns\\action";
-            Config::put('class.actionNamespace', $ans);
+            Config::put(Consts::CONF_ROUTER_ACTION_NS, $ans);
         }
-        if (!isset($config['class.filterNamespace'])) {
+        if (!isset($config[Consts::CONF_ROUTER_FILTER_NS])) {
             $fns = $ns == '\\' ? '\filter' : "$ns\\filter";
-            Config::put('class.filterNamespace', $fns);
+            Config::put(Consts::CONF_ROUTER_FILTER_NS, $fns);
         }
         if (!self::$_instance) {
             self::$_instance = new Framework();
@@ -81,9 +81,11 @@ class Framework {
      */
     protected function processPretty() {
         $this->classloader = new ClassLoader();
-        $webRequest = new WebRequest();
+        // $webRequest = new WebRequest();
+        V::setClassLoader($this->classloader);
+        $webRequest = $this->classloader->load('@%WebRequest');
         $guardians = array();
-        if ($gds = Config::get('guardians.mappings')) {
+        if ($gds = Config::get(Consts::CONF_GUARD_MAPPINGS)) {
             foreach($gds as $key => $value) {
                 $guardian = $this->classloader->load($value, true, true);
                 if (!$guardian) {
@@ -92,7 +94,7 @@ class Framework {
                 }
                 $guardians[$key] = $guardian;
             }
-            $this->guard($guardians, $webRequest, Config::get('guardians.maxRewinds', 10));
+            $this->guard($guardians, $webRequest, Config::get(Consts::CONF_GUARD_REWIND_LIMIT, 10));
             if ($webRequest->getCode() == WebRequest::REWRITE_TERMINATE) {
                 return;
             }
@@ -102,11 +104,16 @@ class Framework {
             throw new Exception('Framework started failed. Could not load the router.',
                                     Exception::CODE_PRETTY_MISSING_CORE_CLASSES);
         }
-        $clzName = $router->findAction($webRequest);
+        $av = $router->findAction($webRequest);
         $filters = $router->findFilters($webRequest);
-        $action = $this->classloader->load($clzName, 1, 1);
+
+        if (is_object($av) && $av->isActionV()) {
+            $action = $av;
+        } else {
+            $action = $this->classloader->load(is_object($av) ? $av->getExp() : $av, 1, 1);
+        }
         $this->runActionAndfilter($webRequest, $action, $filters);
-        $this->runForwardAction($action, Config::get('action.forwardLimits', 5));
+        $this->runForwardAction($action, Config::get(Consts::CONF_ROUTER_FORWARD_LIMIT, 5));
         $this->display($action);
     }
 
@@ -161,7 +168,10 @@ class Framework {
             throw new Exception('Too many action forwards, check dead loop or increase [action.forwardLimits]', Exception::CODE_PRETTY_ACTION_ERROR);
         }
         if ($fw = $action->getForward()) {
-            $fwa = $this->classloader->load($fw, 1, 1);
+            $fwa = ActionV::loadV($fw);
+            if (!$fwa->isActionV()) {
+                $fwa = $this->classloader->load($fwa->getExp(), 1, 1);
+            }
             if (!$fwa) {
                 throw new Exception('Forward Action not found', Exception::CODE_PRETTY_CLASS_NOTFOUND);
             }
@@ -176,7 +186,7 @@ class Framework {
 
     private function guard($guardians, $webRequest, $remains) {
         if ($remains <= 0) {
-            throw new Exception('Too much guradian rewinds. Check dead loops in guardians\' rewriting rule or increase [guardians.maxRewrites]',
+            throw new Exception('Too much guradian rewinds. Check dead loops in guardians\' rewriting rule or increase [CONF_GUARD_REWIND_LIMIT]',
                 Exception::CODE_PRETTY_ACTION_ERROR);
         }
         $remains--;

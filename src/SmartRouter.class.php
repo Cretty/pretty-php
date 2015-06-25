@@ -5,6 +5,7 @@ namespace net\shawn_huang\pretty;
 class SmartRouter {
 
     public $classLoader = "@%ClassLoader";
+    const FILTER_LIMIT = 5;
 
     private $filters;
     private $ext;
@@ -33,7 +34,7 @@ class SmartRouter {
     }
 
     private function findInStatic($uri) {
-        if (!($mappings = Config::get('router.mappings'))) {
+        if (!($mappings = Config::get(Consts::CONF_ROUTER_MAPPINGS))) {
             return null;
         }
         foreach ($mappings as $regex => $clz) {
@@ -46,7 +47,7 @@ class SmartRouter {
 
     private function tearFilters(WebRequest $request) {
         $arr = explode('/', $request->getUri());
-        if (count($arr) < Config::get('router.filterLimits', 5)) {
+        if (count($arr) < Config::get(Consts::CONF_ROUTER_FILTER_LIMIT, self::FILTER_LIMIT)) {
             # filter limits
             return;
         }
@@ -60,22 +61,32 @@ class SmartRouter {
 
     private function findActionByNs(WebRequest $request, $uri) {
         $arr = explode('/', $uri);
-        $actionNs = Config::get('class.actionNamespace');
-        if (count($arr) > Config::get('router.filterLimits', 5)) {
+        $actionNs = Config::get(Consts::CONF_ROUTER_ACTION_NS);
+        if (count($arr) > Config::get(Consts::CONF_ROUTER_FILTER_LIMIT, 5)) {
             # filter limits
             return null;
         }
-        $fallbackLimit = Config::get('router.maxFallbacks', 2);
+        // By default, disable action fallbacks
+        $fallbackLimit = Config::get(Consts::CONF_ROUTER_FALLBACK_LIMIT, 1);
         $subPaths = array();
         while($fallbackLimit--) {
             $subPath = array_pop($arr);
             $clzName = StringUtil::toPascalCase($subPath);
             $ns = $actionNs . implode('\\', $arr);
             $cname = "$ns\\$clzName";
-            if ($this->classLoader->loadDefinition($cname, $detail)) {
+
+            # Try to find Action V
+            $av = ActionV::loadV($cname);
+            if ($av->isActionV()) {
                 $this->filters = $this->loadFilters($arr);
                 $request->putExtra('subPaths', $subPaths);
-                return $detail['name'];
+                return $av;
+            }
+
+            if ($this->classLoader->loadDefinition($av->getExp(), $detail)) {
+                $this->filters = $this->loadFilters($arr);
+                $request->putExtra('subPaths', $subPaths);
+                return $av->getExp();
             }
             array_unshift($subPaths, $subPath);
         }
@@ -85,7 +96,7 @@ class SmartRouter {
 
     public function loadFilters($arr) {
         $ret = array();
-        $filterNs = Config::get('class.filterNamespace');
+        $filterNs = Config::get(Consts::CONF_ROUTER_FILTER_NS);
         while(1) {
             $filterName = array_pop($arr);
             if (!$filterName) {
