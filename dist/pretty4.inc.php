@@ -678,7 +678,7 @@ class Framework {
                 throw new Exception('Forward Action not found', Exception::CODE_PRETTY_CLASS_NOTFOUND);
             }
             $fwa->copyFrom($action);
-            $this->runActionAndfilter($fwa, array());
+            $this->runActionAndFilter($action->getWebRequest(), $fwa, array());
             if ($fwa->getForward()) {
                 $this->runForwardAction($fwa, $remains);
             }
