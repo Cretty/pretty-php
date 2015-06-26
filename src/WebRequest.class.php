@@ -138,7 +138,7 @@ class WebRequest {
         if ($key === null) {
             return $this->extra;
         }
-        return Arrays::valueFrom($this->extra, $default);
+        return Arrays::valueFrom($this->extra, $key, $default);
     }
 
 }
