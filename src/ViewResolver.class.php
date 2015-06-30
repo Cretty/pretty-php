@@ -4,7 +4,8 @@ namespace net\shawn_huang\pretty;
 
 /**
  * Resolve view in Action.
- * Each type of view should defined in config['view.mappings'] by
+ * Each type of view should be Pretty expression or
+ * be defined in config['view.mappings'] by
  * its name and expression
  * eg:
  * $config['view.mappings'] = array(
@@ -31,13 +32,8 @@ class ViewResolver {
                 break;
         }
         $viewMappings = Config::get(Consts::CONF_VIEW_MAPPINGS);
-        if (!isset($viewMappings[$viewType])) {
-            throw new Exception(
-                "Could not render view by type $viewType",
-                Exception::CODE_PRETTY_VIEW_NOTFOUND);
-        }
-        $viewName = $viewMappings[$viewType];
-        $view = $this->classLoader->load($viewName, true);
+        $viewName = Arrays::valueFrom($viewMappings, $viewType, $viewType);
+        $view = $this->classLoader->load($viewName, true, false);
         if (!$view) {
             throw new Exception("Could not render view by $viewName, view class not found.",
                 Exception::CODE_PRETTY_CLASS_NOTFOUND);
