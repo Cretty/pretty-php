@@ -14,8 +14,13 @@ class SmartRouter {
         $uri = preg_replace('/\\/+/', '/', $request->getUri());
         $clz = $this->findInStatic($uri);
         if ($clz) {
-            if($this->classLoader->loadDefinition($clz, $detail)) {
-                return $detail['origin'];
+            $av = Actionv::loadV($clz);
+            if ($av->isActionV()) {
+                return $av;
+            }
+
+            if ($this->classLoader->loadDefinition($av->getExp())) {
+                return $av->getExp();
             }
         }
         $dotPos = strpos($uri, '.');
@@ -27,10 +32,7 @@ class SmartRouter {
     }
 
     public function findFilters(WebRequest $request) {
-        if ($this->filters === null) {
-            $this->tearFilters($request);
-        }
-        return $this->filters;
+        return $this->filters ?: array();
     }
 
     private function findInStatic($uri) {
@@ -43,20 +45,6 @@ class SmartRouter {
             }
         }
         return null;
-    }
-
-    private function tearFilters(WebRequest $request) {
-        $arr = explode('/', $request->getUri());
-        if (count($arr) < Config::get(Consts::CONF_ROUTER_FILTER_LIMIT, self::FILTER_LIMIT)) {
-            # filter limits
-            return;
-        }
-        foreach ($arr as $key => $value) {
-            $filter = $this->classLoader->load($value, true, false);
-            if ($filter) {
-                $this->filters[] = $filter;
-            }
-        }
     }
 
     private function findActionByNs(WebRequest $request, $uri) {
