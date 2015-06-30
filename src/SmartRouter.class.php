@@ -26,10 +26,7 @@ class SmartRouter {
     }
 
     public function findFilters(WebRequest $request) {
-        if ($this->filters === null) {
-            $this->tearFilters($request);
-        }
-        return $this->filters;
+        return $this->filters ?: array();
     }
 
     private function findInStatic($uri) {
@@ -42,20 +39,6 @@ class SmartRouter {
             }
         }
         return null;
-    }
-
-    private function tearFilters(WebRequest $request) {
-        $arr = explode('/', $request->getUri());
-        if (count($arr) < Config::get('router.filterLimits', 5)) {
-            # filter limits
-            return;
-        }
-        foreach ($arr as $key => $value) {
-            $filter = $this->classLoader->load($value, true, false);
-            if ($filter) {
-                $this->filters[] = $filter;
-            }
-        }
     }
 
     private function findActionByNs(WebRequest $request, $uri) {
