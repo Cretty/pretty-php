@@ -82,7 +82,12 @@ class ActionV extends Action {
                 require $path;
                 $this->runnable = V::getRunnable();
                 $this->put(V::data());
-                $this->setView(V::view());
+                $view = V::view();
+                if ($view) {
+                    \call_user_func_array(array($this, 'setView'), V::view());
+                } else {
+                    $this->setView($view);
+                }
                 return $this->isV = true;
             }
         } else {
