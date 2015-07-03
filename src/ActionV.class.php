@@ -42,7 +42,7 @@ class ActionV extends Action {
                 return $this->isV = true;
             }
         } else {
-            throw new Exception("Forward Action [{$this->exp}] not found", Exception::CODE_PRETTY_CLASS_NOTFOUND);
+            throw new Exception("Invalid Expression[{$this->exp}]", Exception::CODE_PRETTY_CLASS_NOTFOUND);
         }
         $this->exp = $clz;
         return $this->isV = false;

@@ -954,6 +954,7 @@ class V {
     }
     public function _run($callback) {
         $this->runnable = $callback;
+        return $this;
     }
     public function _getRunnable() {
         return $this->runnable;
@@ -962,6 +963,7 @@ class V {
         if ($name) {
             eval("namespace {class $name extends \\net\\shawn_huang\\pretty\\V {} }");
         }
+        return $this;
     }
     public function _setClassLoader($cl) {
         $this->cl = $cl;
@@ -986,7 +988,7 @@ class V {
     public function _put($key, $v = null) {
         if (is_array($key)) {
             $this->data = $key + $this->date;
-            return;
+            return $this;
         }
         $this->data[$key] = $v;
         return $this;
