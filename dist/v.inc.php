@@ -992,7 +992,7 @@ class V {
     }
     public function _put($key, $v = null) {
         if (is_array($key)) {
-            $this->data = $key + $this->date;
+            $this->data = $key + $this->data;
             return $this;
         }
         $this->data[$key] = $v;
