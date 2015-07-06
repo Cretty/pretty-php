@@ -982,10 +982,10 @@ class V {
         return Arrays::valueFrom($_GET, $key, $default);
     }
     public function _p($key, $default = null) {
-        return Arrays::valueFrom($_GET, $key, $default);
+        return Arrays::valueFrom($_POST, $key, $default);
     }
     public function _r($key, $default = null) {
-        return Arrays::valueFrom($_GET, $key, $default);
+        return Arrays::valueFrom($_REQUEST, $key, $default);
     }
     public function _c($expression, $invoke = true, $warnings = true) {
         return $this->cl->load($expression, $invoke, $warnings);
