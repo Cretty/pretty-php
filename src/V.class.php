@@ -98,7 +98,7 @@ class V {
         if ($key === false || $key === null) {
             return $this->data;
         } else {
-            return Arrays::valueFrom($key, $default);
+            return Arrays::valueFrom($this->data, $key, $default);
         }
     }
 
