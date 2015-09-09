@@ -10,6 +10,8 @@ require_once '../src/v.inc.php';
  */
 class ExceptionTest extends \PHPUnit_Framework_TestCase {
 
+    protected $preserveGlobalState = FALSE;
+
     private $config;
 
     public function setUp() {

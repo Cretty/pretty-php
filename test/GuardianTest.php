@@ -10,6 +10,8 @@ use \net\shawn_huang\pretty\Config;
  */
 class GuardianTest extends \PHPUnit_Framework_TestCase {
 
+    protected $preserveGlobalState = FALSE;
+
     private $config;
 
     public function setup() {

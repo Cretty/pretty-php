@@ -2,7 +2,7 @@
 
 error_reporting(E_ALL);
 ini_set('display_errors', 'on');
-@require_once '../src/v.inc.php';
+require_once '../src/v.inc.php';
 use \net\shawn_huang\pretty as p;
 use \net\shawn_huang\pretty\Config;
 /**
@@ -10,6 +10,7 @@ use \net\shawn_huang\pretty\Config;
  * @runTestsInSeparateProcess
  */
 class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
+    protected $preserveGlobalState = FALSE;
 
     public function setUp() {
         Config::initDefault([
@@ -23,7 +24,7 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
         ]);
     }
 
-    public function testAll() {
+    public function testGeneral() {
         $cl = new p\ClassLoader;
         $obj = $cl->load('@*Router', true, true);
 
@@ -208,6 +209,15 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
 
         $val = $cl->load('@#class.aliasLimit');
         $this->assertEquals($val, Config::get('class.aliasLimit'));
+    }
+
+    public function testautoload() {
+        $cl = new p\classloader();
+        $cl->forkAutoload();
+        $obj = new \foo();
+        $this->assertnotnull($obj);
+        $obj = new \action\Index;
+        $this->assertnotnull($obj);
     }
 
 }

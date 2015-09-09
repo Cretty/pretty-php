@@ -11,6 +11,8 @@ use \net\shawn_huang\pretty\Config;
  */
 class ConfigTest extends \PHPUnit_Framework_TestCase {
 
+    protected $preserveGlobalState = FALSE;
+
     public function setUp() {
         parent::setUp();
         Config::initDefault([

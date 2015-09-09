@@ -11,6 +11,8 @@ use \net\shawn_huang\pretty\Config;
  */
 class FilterTest extends \PHPUnit_Framework_TestCase {
 
+    protected $preserveGlobalState = FALSE;
+
     private $baseConfig;
     public function setup() {
         $this->baseConfig = [

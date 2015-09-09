@@ -11,6 +11,8 @@ use \net\shawn_huang\pretty\Consts;
  */
 class RouterTest extends \PHPUnit_Framework_TestCase {
 
+    protected $preserveGlobalState = FALSE;
+
     private $baseConfig;
     public function setUp() {
         parent::setUp();

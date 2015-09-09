@@ -10,6 +10,8 @@ use \net\shawn_huang\pretty\Arrays;
  */
 class ArraysTest extends \PHPUnit_Framework_TestCase {
 
+    protected $preserveGlobalState = FALSE;
+
     private $array;
 
     public function setUp() {
@@ -59,7 +61,7 @@ class ArraysTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse(isset($this->array['foo']));
         $this->array['foo'] = 'bar';
     }
- 
+
     public function testReplace() {
         $old = [
             'a' => 'a',
@@ -106,7 +108,7 @@ class ArraysTest extends \PHPUnit_Framework_TestCase {
             'f' => ['a' => 1, 'b' => 2]
         ];
         $second = [
-            'a' => 4, 
+            'a' => 4,
             'b' => ['a', 'b'],
             'c' => 'c',
             'd',
@@ -157,11 +159,11 @@ class ArraysTest extends \PHPUnit_Framework_TestCase {
         $property->setAccessible(true);
 
         $arr0 = new Arrays($first);
-        $arr0->mergeWith($second); 
+        $arr0->mergeWith($second);
         $this->assertEquals($expects0, $property->getValue($arr0));
 
         $arr1 = new Arrays($second);
-        $arr1->mergeWith($first); 
+        $arr1->mergeWith($first);
         $this->assertEquals($expects1, $property->getValue($arr1));
 
         $arr3 = new Arrays($first);
