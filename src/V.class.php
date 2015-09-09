@@ -110,4 +110,8 @@ class V {
             return $this->view;
         }
     }
+
+    public function _forkAutoload() {
+        $this->cl->forkAutoload();
+    }
 }
