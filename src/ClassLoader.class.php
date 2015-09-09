@@ -144,8 +144,13 @@ class ClassLoader {
 
     }
 
-    public function fockAutoload() {
-        spl_autoload_register(array($this, 'loadDefinition'));
+    public function forkAutoload() {
+        spl_autoload_register(function ($classname) {
+            if ($classname{0} !== '\\') {
+                $classname = "\\$classname";
+            }
+            $this->loadDefinition($classname);
+        });
     }
 
     public function explainClass($desc, $aliasDeep = 0) {
