@@ -238,8 +238,13 @@ class ClassLoader {
     }
     public function realClassName($class) {
     }
-    public function fockAutoload() {
-        spl_autoload_register(array($this, 'loadDefinition'));
+    public function forkAutoload() {
+        spl_autoload_register(function ($classname) {
+            if ($classname{0} !== '\\') {
+                $classname = "\\$classname";
+            }
+            $this->loadDefinition($classname);
+        });
     }
     public function explainClass($desc, $aliasDeep = 0) {
         if (is_array($desc)) {
