@@ -113,5 +113,6 @@ class V {
 
     public function _forkAutoload() {
         $this->cl->forkAutoload();
+        return $this;
     }
 }
