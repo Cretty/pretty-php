@@ -24,10 +24,15 @@ class ActionV extends Action {
     }
 
     protected function run() {
-        $func = $this->runnable;
-        if (is_callable($func)) {
-            $func($this);
+        if ($this->runnable == null) {
+            return;
         }
+        list($func, $args) = $this->runnable;
+        $params = array($this);
+        foreach ($args as $value) {
+            $params[] = $this->classloader->load($value, true, true);
+        }
+        call_user_func_array($func, $params);
     }
 
     private function init() {

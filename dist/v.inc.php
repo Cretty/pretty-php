@@ -69,10 +69,15 @@ class ActionV extends Action {
         }
     }
     protected function run() {
-        $func = $this->runnable;
-        if (is_callable($func)) {
-            $func($this);
+        if ($this->runnable == null) {
+            return;
         }
+        list($func, $args) = $this->runnable;
+        $params = array($this);
+        foreach ($args as $value) {
+            $params[] = $this->classloader->load($value, true, true);
+        }
+        call_user_func_array($func, $params);
     }
     private function init() {
         $clz = $this->classloader->explainClasses($this->exp);
@@ -962,8 +967,8 @@ class V {
     private function __construct() {
         $this->data = array();
     }
-    public function _run($callback) {
-        $this->runnable = $callback;
+    public function _run($callback, $dependings = array()) {
+        $this->runnable = array($callback, $dependings);
         return $this;
     }
     public function _getRunnable() {
