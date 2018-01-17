@@ -97,35 +97,35 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
     public function testExplainClasses() {
         # test domain
         $cl = new p\ClassLoader();
-        $str = '@foo';
+        $str = '@Foo';
         $arr = $cl->explainClasses($str);
         $expect = $cl->classTemplate($str, [
-            'name' => '\foo',
+            'name' => '\Foo',
             'isClass' => true,
             'type' => p\CLASS_TYPE_DOMAIN,
-            'file' => __DIR__ . '/test_classes/foo'
+            'file' => __DIR__ . '/test_classes/Foo'
         ]);
         $this->assertEquals($expect, $arr);
 
         # test pretty
-        $str = '@%foo';
+        $str = '@%Foo';
         $arr = $cl->explainClasses($str);
         $expect = $cl->classTemplate($str, [
-            'name' => '\net\shawn_huang\pretty\foo',
+            'name' => '\net\shawn_huang\pretty\Foo',
             'isClass' => true,
             'type' => p\CLASS_TYPE_PRETTY,
-            'file' => dirname(__DIR__) . '/src/foo'
+            'file' => dirname(__DIR__) . '/src/Foo'
         ]);
         $this->assertEquals($expect, $arr);
 
         # test domain
-        $str = '\foo';
+        $str = '\Foo';
         $arr = $cl->explainClasses($str);
         $expect = $cl->classTemplate($str, [
-            'name' => '\foo',
+            'name' => '\Foo',
             'isClass' => true,
             'type' => p\CLASS_TYPE_DOMAIN,
-            'file' => __DIR__ . '/test_classes/foo'
+            'file' => __DIR__ . '/test_classes/Foo'
         ]);
         $this->assertEquals($expect, $arr);
 
@@ -133,28 +133,28 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
         p\Config::put('class.namespace', '\aa');
 
         $cl = new p\ClassLoader();
-        $str = '\foo';
+        $str = '\Foo';
         $arr = $cl->explainClasses($str);
         $expect = $cl->classTemplate($str, [
-            'name' => '\foo',
+            'name' => '\Foo',
             'isClass' => true,
             'type' => p\CLASS_TYPE_ABSOLUTE,
-            'file' => __DIR__ . '/test_lib/foo'
+            'file' => __DIR__ . '/test_lib/Foo'
         ]);
         $this->assertEquals($expect, $arr);
-        $str = '@foo';
+        $str = '@Foo';
         $arr = $cl->explainClasses($str);
-        $expect['origin'] = '@foo';
+        $expect['origin'] = '@Foo';
         $this->assertEquals($expect, $arr);
 
         # test domain
-        $str = '@.foo';
+        $str = '@.Foo';
         $arr = $cl->explainClasses($str);
         $expect = $expect = $cl->classTemplate($str, [
-            'name' => '\aa\foo',
+            'name' => '\aa\Foo',
             'isClass' => true,
             'type' => p\CLASS_TYPE_DOMAIN,
-            'file' => __DIR__ . '/test_classes/foo'
+            'file' => __DIR__ . '/test_classes/Foo'
         ]);
         $this->assertEquals($expect, $arr);
     }
@@ -214,7 +214,7 @@ class ClassLoaderTest extends \PHPUnit_Framework_TestCase {
     public function testautoload() {
         $cl = new p\classloader();
         $cl->forkAutoload();
-        $obj = new \foo();
+        $obj = new \Foo();
         $this->assertnotnull($obj);
         $obj = new \action\Index;
         $this->assertnotnull($obj);
