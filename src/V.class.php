@@ -42,13 +42,19 @@ class V {
         $this->data = array();
     }
 
-    public function _run($callback) {
-        $this->runnable = $callback;
+    public function _run($callback, $dependings) {
+         $this->runnable = array($callback, $dependings);
         return $this;
     }
 
     public function _getRunnable() {
         return $this->runnable;
+    }
+
+    public function _on($method, $callback, $dependings) {
+        if (strtolower($method) === strtolower($_SERVER['REQUEST_METHOD'])) {
+            $this->_run($callback, $dependings);
+        }
     }
 
     public function _bind($name = 'V') {
