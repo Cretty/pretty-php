@@ -120,6 +120,18 @@ abstract class Action extends WebResource {
         return $this->forward;
     }
 
+    public function getSubPath() {
+        return $this->getWebRequest()->getExtra('subPaths');
+    }
+
+    public function getMeta($key) {
+        return $this->getWebRequest()->getExtra($key);
+    }
+
+    public function setMeta($key, $value) {
+        $this->webRequest->putExtra($key, $value);
+    }
+
     /**
      * Set the web request
      * @param WebRequest $request the web request

@@ -219,7 +219,7 @@ class Framework {
         }
     }
 
-    private function onException($exp) {
+    public function onException($exp) {
         if ($this->classloader) {
             $handler = $this->classloader->load('@*ExceptionHandler');
             if ($handler) {

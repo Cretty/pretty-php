@@ -42,7 +42,7 @@ class V {
         $this->data = array();
     }
 
-    public function _run($callback, $dependings) {
+    public function _run($callback, $dependings = []) {
          $this->runnable = array($callback, $dependings);
         return $this;
     }
@@ -51,7 +51,7 @@ class V {
         return $this->runnable;
     }
 
-    public function _on($method, $callback, $dependings) {
+    public function _on($method, $callback, $dependings = []) {
         if (strtolower($method) === strtolower($_SERVER['REQUEST_METHOD'])) {
             $this->_run($callback, $dependings);
         }
@@ -89,6 +89,10 @@ class V {
 
     public function _c($expression, $invoke = true, $warnings = true) {
         return $this->cl->load($expression, $invoke, $warnings);
+    }
+
+    public function _find($expression) {
+        $this->cl->loadDefinition($expression);
     }
 
     public function _put($key, $v = null) {
