@@ -45,6 +45,15 @@ abstract class Action extends WebResource {
     public function getForward() {
         return $this->forward;
     }
+    public function getSubPath() {
+        return $this->getWebRequest()->getExtra('subPaths');
+    }
+    public function getMeta($key) {
+        return $this->getWebRequest()->getExtra($key);
+    }
+    public function setMeta($key, $value) {
+        $this->webRequest->putExtra($key, $value);
+    }
     public function setWebRequest(WebRequest $request) {
         $this->webRequest = $request;
     }
@@ -807,7 +816,7 @@ class Framework {
                 break;
         }
     }
-    private function onException($exp) {
+    public function onException($exp) {
         if ($this->classloader) {
             $handler = $this->classloader->load('@*ExceptionHandler');
             if ($handler) {
@@ -926,8 +935,9 @@ class StringUtil {
         return ucfirst(self::toCamelCase($ori));
     }
     public static function toCamelCase($ori, $exp = '/_([a-z])/') {
-        $func = create_function('$c', 'return strtoupper($c[1]);');
-        return preg_replace_callback($exp, $func, $ori);
+        return preg_replace_callback($exp, function ($c) {
+            return strtoupper($c[1]);
+        }, $ori);
     }
     public static function getCamelTail($str, $exp = '/^(.+)([A-Z][a-z0-9]+)$/') {
         preg_match($exp, $str, $result);
@@ -967,12 +977,17 @@ class V {
     private function __construct() {
         $this->data = array();
     }
-    public function _run($callback, $dependings = array()) {
-        $this->runnable = array($callback, $dependings);
+    public function _run($callback, $dependings = []) {
+         $this->runnable = array($callback, $dependings);
         return $this;
     }
     public function _getRunnable() {
         return $this->runnable;
+    }
+    public function _on($method, $callback, $dependings = []) {
+        if (strtolower($method) === strtolower($_SERVER['REQUEST_METHOD'])) {
+            $this->_run($callback, $dependings);
+        }
     }
     public function _bind($name = 'V') {
         if ($name) {
@@ -999,6 +1014,9 @@ class V {
     }
     public function _c($expression, $invoke = true, $warnings = true) {
         return $this->cl->load($expression, $invoke, $warnings);
+    }
+    public function _find($expression) {
+        $this->cl->loadDefinition($expression);
     }
     public function _put($key, $v = null) {
         if (is_array($key)) {

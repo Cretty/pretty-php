@@ -46,8 +46,9 @@ class StringUtil {
      * @return string parsed string
      */
     public static function toCamelCase($ori, $exp = '/_([a-z])/') {
-        $func = create_function('$c', 'return strtoupper($c[1]);');
-        return preg_replace_callback($exp, $func, $ori);
+        return preg_replace_callback($exp, function ($c) {
+            return strtoupper($c[1]);
+        }, $ori);
     }
 
     /**
