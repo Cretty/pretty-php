@@ -38,6 +38,8 @@ class ClassLoader {
         if (is_string($clz)) {
             $clz = $this->explainClasses($clz);
         }
+        if (!$clz) return null;
+
         if (!$clz['isNew'] && !$clz['args'] && isset($this->pool[$clz['name']])) {
             return $this->pool[$clz['name']];
         }
