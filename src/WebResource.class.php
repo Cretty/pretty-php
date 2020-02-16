@@ -22,7 +22,7 @@ class WebResource {
      */
     public function get($key, $default = null) {
         return Arrays::valueFrom($_GET, $key, $default);
-    } 
+    }
 
     /**
      * Get parameters form $_REQUEST.
@@ -40,6 +40,16 @@ class WebResource {
      */
     public function getPost($key, $default = null) {
         return Arrays::valueFrom($_POST, $key, $default);
+    }
+
+
+    /**
+     * Get Json based object from php://input
+     * @return object input object
+     */
+    public function getObject () {
+        $json = file_get_contents('php://input');
+        return json_decode($json);
     }
 
     /**
@@ -123,7 +133,7 @@ class WebResource {
     public function getView() {
         return $this->view;
     }
-    
+
     /**
      * Set the web request
      * @param WebRequest $request the web request

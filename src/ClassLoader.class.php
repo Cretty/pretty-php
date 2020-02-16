@@ -148,7 +148,7 @@ class ClassLoader {
 
     public function forkAutoload() {
         spl_autoload_register(function ($classname) {
-            if ($classname{0} !== '\\') {
+            if ($classname[0] !== '\\') {
                 $classname = "\\$classname";
             }
             $this->loadDefinition($classname);
@@ -159,7 +159,7 @@ class ClassLoader {
         if (is_array($desc)) {
             return $this->classTemplate('Array', $desc);
         }
-        if ($desc{0} == '\\' && preg_match(REAL_CLASS_PATTERN, $desc)) {
+        if ($desc[0] == '\\' && preg_match(REAL_CLASS_PATTERN, $desc)) {
             $type = CLASS_TYPE_ABSOLUTE;
             if (strpos($desc, $this->ns) === 0) {
                 $type = CLASS_TYPE_DOMAIN;
@@ -179,18 +179,18 @@ class ClassLoader {
                 'file' => $file
             ));
         }
-        if ($desc{0} != '@' && $desc{0} != '&') {
+        if ($desc[0] != '@' && $desc[0] != '&') {
             return $this->classTemplate($desc, array('errors' => 'Not starts with @ or &'));
         }
         if (!preg_match(CLASS_PATTERN, $desc)) {
             return $this->classTemplate($desc, array('errors' => 'not match pattern:' . CLASS_PATTERN));
         }
-        $prefix = $desc{0};
+        $prefix = $desc[0];
         $alias = Config::get(Consts::CONF_CLASS_ALIAS);
         $isNew = false;
-        switch($desc{1}) {
+        switch($desc[1]) {
             case '%':
-                if ($desc{2} == '+') {
+                if ($desc[2] == '+') {
                     $isNew = true;
                 }
                 $name = str_replace(
@@ -202,7 +202,7 @@ class ClassLoader {
                 $file = $this->parsePrettyFile($name);
                 break;
             case '.':
-                if ($desc{2} == '+') {
+                if ($desc[2] == '+') {
                     $isNew = true;
                 }
                 $name = str_replace(
@@ -240,7 +240,7 @@ class ClassLoader {
                     $desc
                 );
                 $clz = $this->explainClass($name);
-                $clz['isNew'] = $desc{1} == '+' ? true : false;
+                $clz['isNew'] = $desc[1] == '+' ? true : false;
                 $clz['loadChildren'] = $prefix == '@' ? true : false;
                 return $clz;
         }
@@ -258,7 +258,7 @@ class ClassLoader {
         if (is_array($desc)) {
             return $this->classTemplate($desc, $desc);
         }
-        if (!isset($desc{1})) {
+        if (!isset($desc[1])) {
             return $this->classTemplate($desc);
         }
         $arr = explode('>', $desc);
