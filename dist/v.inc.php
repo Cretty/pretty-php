@@ -935,9 +935,9 @@ class StringUtil {
     public static function toPascalCase($ori) {
         return ucfirst(self::toCamelCase($ori));
     }
-    public static function toCamelCase($ori, $exp = '/_([a-z])/') {
+    public static function toCamelCase($ori, $exp = '/(-|_)([a-z])/') {
         return preg_replace_callback($exp, function ($c) {
-            return strtoupper($c[1]);
+            return strtoupper($c[2]);
         }, $ori);
     }
     public static function getCamelTail($str, $exp = '/^(.+)([A-Z][a-z0-9]+)$/') {
