@@ -48,37 +48,27 @@ class SmartRouter {
     }
 
     private function findActionByNs(WebRequest $request, $uri) {
-        $arr = explode('/', $uri);
         $actionNs = Config::get(Consts::CONF_ROUTER_ACTION_NS);
-        if (count($arr) > Config::get(Consts::CONF_ROUTER_FILTER_LIMIT, 5)) {
-            # filter limits
-            return null;
-        }
-        // By default, disable action fallbacks
-        $fallbackLimit = Config::get(Consts::CONF_ROUTER_FALLBACK_LIMIT, 1);
-        $subPaths = array();
-        while($fallbackLimit--) {
-            $subPath = array_pop($arr);
-            $clzName = StringUtil::toPascalCase($subPath);
-            $ns = $actionNs . implode('\\', $arr);
-            $cname = "$ns\\$clzName";
+        $pathInfo = $this->parseUrl($uri);
 
-            # Try to find Action V
-            $av = ActionV::loadV($cname);
-            if ($av->isActionV()) {
-                $this->filters = $this->loadFilters($arr);
-                $request->putExtra('subPaths', $subPaths);
-                return $av;
-            }
+        if (!$pathInfo) return null;
 
-            if ($this->classLoader->loadDefinition($av->getExp(), $detail)) {
-                $this->filters = $this->loadFilters($arr);
-                $request->putExtra('subPaths', $subPaths);
-                return $av->getExp();
-            }
-            array_unshift($subPaths, $subPath);
+        list($clz, $params, $filters) = $pathInfo;
+
+        $cname = "$actionNs\\$clz";
+
+        $av = ActionV::loadV($cname);
+        if ($av->isActionV()) {
+            $this->filters = $this->loadFilters($filters);
+            $request->putExtra('params', $params);
+            return $av;
         }
-        # limit reached!
+
+        if ($this->classLoader->loadDefinition($cname, $detail)) {
+            $this->filters = $this->loadFilters($filters);
+            $request->putExtra('params', $params);
+            return $detail['name'];
+        }
         return null;
     }
 
@@ -101,5 +91,62 @@ class SmartRouter {
             }
         }
         return $ret;
+    }
+
+    private function parseUrl ($url) {
+        $regex = '/\/([a-z][\w\-]*)(\/((\d+)|(:\w+)|({[a-z0-9\-]+})))*/i';
+        if (!preg_match_all($regex, $url, $matches)) {
+            return null;
+        }
+
+        $urlFragments = $matches[0];
+        $params = [];
+        $filters = [];
+
+        $newUrl = implode(
+            '\\',
+            array_map(function ($p, $i) use (
+                &$params, &$filters, $urlFragments
+            ) {
+                $paths = explode('/', $p);
+
+                $urlPath = $paths[1];
+                $args = array_slice($paths, 2);
+                $args = array_map(function ($arg) {
+                    if (is_numeric($arg)) {
+                        return $arg + 0;
+                    } else {
+                        if ($arg[0] === ':') {
+                            return substr($arg, 1);
+                        } else {
+                            return substr($arg, 1, strlen($arg) - 2);
+                        }
+                    }
+                }, $args);
+                if (count($args) === 1) $args = $args[0];
+                if (isset($params[$urlPath])) {
+                    $exists = $params[$urlPath];
+                    if (is_array($exists)) {
+                        $params[$urlPath][] = $args;
+                    } else {
+                        $params[$urlPath] = [
+                            $exists, $args
+                        ];
+                    }
+                } else if (!empty($args)) {
+                    $params[$urlPath] = $args;
+                }
+
+                if ($i === count($urlFragments) - 1) {
+                    return StringUtil::toPascalCase($urlPath);
+                } else {
+                    $filters[] = $urlPath;
+                    return $urlPath;
+                }
+
+            }, $urlFragments, array_keys($urlFragments))
+        );
+
+        return [$newUrl, $params, $filters];
     }
 }
