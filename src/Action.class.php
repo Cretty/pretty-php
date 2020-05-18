@@ -128,7 +128,7 @@ abstract class Action extends WebResource {
         return $this->getWebRequest()->getExtra($key);
     }
 
-    public function setMeta($key, $value) {
+    public function setMeta($key = null, $value = null) {
         $this->webRequest->putExtra($key, $value);
     }
 

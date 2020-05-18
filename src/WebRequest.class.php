@@ -130,11 +130,15 @@ class WebRequest {
     }
 
 
-    public function putExtra($key, $value) {
-        $this->extra[$key] = $value;
+    public function putExtra($key, $value = null) {
+        if (is_array($key)) {
+            $this->extra = array_merge($this->extra, $key);
+        } else {
+            $this->extra[$key] = $value;
+        }
     }
 
-    public function getExtra($key, $default = null) {
+    public function getExtra($key = null, $default = null) {
         if ($key === null) {
             return $this->extra;
         }

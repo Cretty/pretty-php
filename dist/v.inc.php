@@ -51,7 +51,7 @@ abstract class Action extends WebResource {
     public function getMeta($key) {
         return $this->getWebRequest()->getExtra($key);
     }
-    public function setMeta($key, $value) {
+    public function setMeta($key = null, $value = null) {
         $this->webRequest->putExtra($key, $value);
     }
     public function setWebRequest(WebRequest $request) {
@@ -880,12 +880,12 @@ class SmartRouter {
         $av = ActionV::loadV($cname);
         if ($av->isActionV()) {
             $this->filters = $this->loadFilters($filters);
-            $request->putExtra('params', $params);
+            $request->putExtra($params);
             return $av;
         }
         if ($this->classLoader->loadDefinition($cname, $detail)) {
             $this->filters = $this->loadFilters($filters);
-            $request->putExtra('params', $params);
+            $request->putExtra($params);
             return $detail['name'];
         }
         return null;
@@ -925,6 +925,7 @@ class SmartRouter {
             ) {
                 $paths = explode('/', $p);
                 $urlPath = $paths[1];
+                $argName = $urlPath;
                 $args = array_slice($paths, 2);
                 $args = array_map(function ($arg) {
                     if (is_numeric($arg)) {
@@ -938,17 +939,17 @@ class SmartRouter {
                     }
                 }, $args);
                 if (count($args) === 1) $args = $args[0];
-                if (isset($params[$urlPath])) {
-                    $exists = $params[$urlPath];
+                if (isset($params[$argName])) {
+                    $exists = $params[$argName];
                     if (is_array($exists)) {
-                        $params[$urlPath][] = $args;
+                        $params[$argName][] = $args;
                     } else {
-                        $params[$urlPath] = [
+                        $params[$argName] = [
                             $exists, $args
                         ];
                     }
                 } else if (!empty($args)) {
-                    $params[$urlPath] = $args;
+                    $params[$argName] = $args;
                 }
                 if ($i === count($urlFragments) - 1) {
                     return StringUtil::toPascalCase($urlPath);
@@ -1173,10 +1174,14 @@ class WebRequest {
     public function getUri() {
         return $this->uri;
     }
-    public function putExtra($key, $value) {
-        $this->extra[$key] = $value;
+    public function putExtra($key, $value = null) {
+        if (is_array($key)) {
+            $this->extra = array_merge($this->extra, $key);
+        } else {
+            $this->extra[$key] = $value;
+        }
     }
-    public function getExtra($key, $default = null) {
+    public function getExtra($key = null, $default = null) {
         if ($key === null) {
             return $this->extra;
         }

@@ -60,13 +60,13 @@ class SmartRouter {
         $av = ActionV::loadV($cname);
         if ($av->isActionV()) {
             $this->filters = $this->loadFilters($filters);
-            $request->putExtra('params', $params);
+            $request->putExtra($params);
             return $av;
         }
 
         if ($this->classLoader->loadDefinition($cname, $detail)) {
             $this->filters = $this->loadFilters($filters);
-            $request->putExtra('params', $params);
+            $request->putExtra($params);
             return $detail['name'];
         }
         return null;
@@ -111,6 +111,7 @@ class SmartRouter {
                 $paths = explode('/', $p);
 
                 $urlPath = $paths[1];
+                $argName = $urlPath;
                 $args = array_slice($paths, 2);
                 $args = array_map(function ($arg) {
                     if (is_numeric($arg)) {
@@ -124,17 +125,17 @@ class SmartRouter {
                     }
                 }, $args);
                 if (count($args) === 1) $args = $args[0];
-                if (isset($params[$urlPath])) {
-                    $exists = $params[$urlPath];
+                if (isset($params[$argName])) {
+                    $exists = $params[$argName];
                     if (is_array($exists)) {
-                        $params[$urlPath][] = $args;
+                        $params[$argName][] = $args;
                     } else {
-                        $params[$urlPath] = [
+                        $params[$argName] = [
                             $exists, $args
                         ];
                     }
                 } else if (!empty($args)) {
-                    $params[$urlPath] = $args;
+                    $params[$argName] = $args;
                 }
 
                 if ($i === count($urlFragments) - 1) {
