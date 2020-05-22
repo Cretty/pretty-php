@@ -16,11 +16,12 @@ class V {
     public static function __callStatic($name, $args) {
         $v = self::getInstance();
         $method = "_$name";
-        if (!method_exists($v, $method)) {
-            trigger_error("Call undefined static method $name of V", E_USER_ERROR);
-            return;
+
+        if (method_exists($v, $method)) {
+            return call_user_func_array(array($v, $method), $args);
         }
-        return call_user_func_array(array($v, $method), $args);
+
+        return $v->_callFacade($name, $args);
     }
 
     public function __call($name, $args) {
@@ -29,7 +30,6 @@ class V {
             trigger_error("Call undefined method $name of V", E_USER_ERROR);
             return;
         }
-        return call_user_func_array(array($this, $method), $args);
     }
 
     private $cl;
@@ -37,6 +37,7 @@ class V {
     private $runnable;
     private $data;
     private $view;
+    public $facades;
 
     private function __construct() {
         $this->data = array();
@@ -67,6 +68,7 @@ class V {
     public function _setClassLoader($cl) {
         $this->cl = $cl;
         $this->meta = $this->cl->load('@%WebRequest');
+        $this->facades = $this->cl->load('@#v.facades');
         return $this;
     }
 
@@ -124,5 +126,18 @@ class V {
     public function _forkAutoload() {
         $this->cl->forkAutoload();
         return $this;
+    }
+
+    public function _callFacade($name, $args) {
+        if (!isset($this->facades[$name])) {
+            trigger_error("Call undefined facade $name", E_USER_ERROR);
+        }
+        $facadeName = $this->facades[$name];
+        $facade = $this->cl->load($name, true);
+        if (!$facades) {
+            trigger_error("$name is not a valid facade", E_USER_ERROR);
+        }
+
+        return call_user_func([$facade, $name], $args);
     }
 }
